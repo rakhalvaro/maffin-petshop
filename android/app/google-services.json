@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "52051130741",
+    "project_id": "maffin-petshop",
+    "storage_bucket": "maffin-petshop.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:52051130741:android:a16a2da643f25bcb5fbb3c",
+        "android_client_info": {
+          "package_name": "com.example.maffin_petshop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzW8c_xo5UdBHeUWxQdVcRGqSfsp9JFCU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

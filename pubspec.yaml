@@ -1,0 +1,50 @@
+name: maffin_petshop
+description: Aplikasi pencatatan untuk Maffin Petshop
+
+publish_to: 'none'
+
+version: 1.0.0+5
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.1.0
+
+  # Firebase
+  firebase_core: ^2.24.2
+  cloud_firestore: ^4.13.6
+
+  # Image
+  image_picker: ^1.0.7
+  http: ^1.2.0
+
+  # UI Components
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icon/icon.png"
+  windows:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    icon_size: 48
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icon/
