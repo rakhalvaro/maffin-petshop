@@ -17,22 +17,22 @@ class _ProductScreenState extends State<ProductScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // ── Cloudinary config ──────────────────────────────────────────────────────
   static const String _cloudName = 'dwx1lavrx';
   static const String _uploadPreset = 'maffin petshop';
-  // ──────────────────────────────────────────────────────────────────────────
 
+  // ── Stock helpers ──────────────────────────────────────────────────────────
   Color _getStockColor(int stock) {
     if (stock > 10) return Colors.green;
-    if (stock >= 6) return Colors.orange;
+    if (stock >= 1) return Colors.orange;
     return Colors.red;
   }
 
   String _getStockStatus(int stock) {
     if (stock > 10) return 'Aman';
-    if (stock >= 6) return 'Rendah';
-    return 'Sangat Rendah';
+    if (stock >= 1) return 'Rendah';
+    return 'Habis';
   }
+  // ──────────────────────────────────────────────────────────────────────────
 
   List<Product> _filterProducts(List<Product> products) {
     if (_searchQuery.isEmpty) return products;
@@ -41,7 +41,6 @@ class _ProductScreenState extends State<ProductScreen> {
         .toList();
   }
 
-  /// Pilih gambar dari galeri (dikompres otomatis 300x300, quality 70%)
   Future<XFile?> _pickImage() async {
     return await _picker.pickImage(
       source: ImageSource.gallery,
@@ -51,18 +50,14 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
-  /// Upload gambar ke Cloudinary, return URL atau null jika gagal
   Future<String?> _uploadToCloudinary(XFile imageFile) async {
     try {
       final uri = Uri.parse(
         'https://api.cloudinary.com/v1_1/$_cloudName/image/upload',
       );
-
       final request = http.MultipartRequest('POST', uri)
         ..fields['upload_preset'] = _uploadPreset
-        ..files.add(
-          await http.MultipartFile.fromPath('file', imageFile.path),
-        );
+        ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
@@ -85,7 +80,7 @@ class _ProductScreenState extends State<ProductScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // ── Search Bar ──────────────────────────────────────────────────
+          // Search Bar
           Container(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
@@ -111,8 +106,7 @@ class _ProductScreenState extends State<ProductScreen> {
               onChanged: (v) => setState(() => _searchQuery = v),
             ),
           ),
-
-          // ── Product List ────────────────────────────────────────────────
+          // Product List
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _firestore
@@ -142,8 +136,7 @@ class _ProductScreenState extends State<ProductScreen> {
                         Icon(Icons.search_off, size: 64, color: Colors.grey),
                         const SizedBox(height: 16),
                         Text('Produk tidak ditemukan',
-                            style:
-                                TextStyle(fontSize: 18, color: Colors.grey)),
+                            style: TextStyle(fontSize: 18, color: Colors.grey)),
                         Text('Coba kata kunci lain',
                             style: TextStyle(color: Colors.grey)),
                       ],
@@ -162,8 +155,8 @@ class _ProductScreenState extends State<ProductScreen> {
                         contentPadding: const EdgeInsets.all(12),
                         leading: _buildProductImage(product),
                         title: Text(product.name,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold)),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -212,8 +205,6 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
-  // ── Image widget ───────────────────────────────────────────────────────────
-
   Widget _buildProductImage(Product product, {double size = 60}) {
     if (product.imageUrl != null && product.imageUrl!.isNotEmpty) {
       return ClipRRect(
@@ -251,8 +242,6 @@ class _ProductScreenState extends State<ProductScreen> {
             color: Colors.orange[300], size: size * 0.5),
       );
 
-  // ── Dialog tambah produk ───────────────────────────────────────────────────
-
   void _showAddProductDialog(BuildContext context) {
     final nameCtrl = TextEditingController();
     final stockCtrl = TextEditingController();
@@ -269,7 +258,6 @@ class _ProductScreenState extends State<ProductScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Foto picker ──────────────────────────────────────────
                 GestureDetector(
                   onTap: () async {
                     final img = await _pickImage();
@@ -338,18 +326,13 @@ class _ProductScreenState extends State<ProductScreen> {
             ElevatedButton(
               onPressed: () async {
                 if (nameCtrl.text.isEmpty) return;
-
-                // Tampilkan loading
                 showDialog(
                   context: ctx,
                   barrierDismissible: false,
                   builder: (_) =>
                       const Center(child: CircularProgressIndicator()),
                 );
-
                 String? imageUrl;
-
-                // 1. Upload gambar ke Cloudinary jika ada
                 if (selectedImage != null) {
                   imageUrl = await _uploadToCloudinary(selectedImage!);
                   if (imageUrl == null && mounted) {
@@ -361,8 +344,6 @@ class _ProductScreenState extends State<ProductScreen> {
                     );
                   }
                 }
-
-                // 2. Simpan produk ke Firestore
                 await _firestore.collection('products').add({
                   'name': nameCtrl.text,
                   'stock': int.tryParse(stockCtrl.text) ?? 0,
@@ -370,10 +351,9 @@ class _ProductScreenState extends State<ProductScreen> {
                   'sellPrice': double.tryParse(sellCtrl.text) ?? 0,
                   'imageUrl': imageUrl,
                 });
-
                 if (mounted) {
-                  Navigator.pop(ctx); // tutup loading
-                  Navigator.pop(ctx); // tutup dialog
+                  Navigator.pop(ctx);
+                  Navigator.pop(ctx);
                 }
               },
               child: const Text('Simpan'),
@@ -384,11 +364,10 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
-  // ── Dialog edit produk ─────────────────────────────────────────────────────
-
   void _showEditProductDialog(BuildContext context, Product product) {
     final nameCtrl = TextEditingController(text: product.name);
-    final stockCtrl = TextEditingController(text: product.stock.toString());
+    final stockCtrl =
+        TextEditingController(text: product.stock.toString());
     final buyCtrl =
         TextEditingController(text: product.buyPrice.toString());
     final sellCtrl =
@@ -404,7 +383,6 @@ class _ProductScreenState extends State<ProductScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Foto picker (tampilkan existing jika ada) ────────────
                 GestureDetector(
                   onTap: () async {
                     final img = await _pickImage();
@@ -417,8 +395,8 @@ class _ProductScreenState extends State<ProductScreen> {
                         height: 100,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          border:
-                              Border.all(color: Colors.orange, width: 2),
+                          border: Border.all(
+                              color: Colors.orange, width: 2),
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
@@ -479,18 +457,13 @@ class _ProductScreenState extends State<ProductScreen> {
             ElevatedButton(
               onPressed: () async {
                 if (nameCtrl.text.isEmpty) return;
-
-                // Tampilkan loading
                 showDialog(
                   context: ctx,
                   barrierDismissible: false,
                   builder: (_) =>
                       const Center(child: CircularProgressIndicator()),
                 );
-
                 String? imageUrl = product.imageUrl;
-
-                // Upload gambar baru ke Cloudinary jika ada perubahan
                 if (selectedImage != null) {
                   final newUrl =
                       await _uploadToCloudinary(selectedImage!);
@@ -505,8 +478,6 @@ class _ProductScreenState extends State<ProductScreen> {
                     );
                   }
                 }
-
-                // Update Firestore
                 await _firestore
                     .collection('products')
                     .doc(product.id)
@@ -517,10 +488,9 @@ class _ProductScreenState extends State<ProductScreen> {
                   'sellPrice': double.tryParse(sellCtrl.text) ?? 0,
                   'imageUrl': imageUrl,
                 });
-
                 if (mounted) {
-                  Navigator.pop(ctx); // tutup loading
-                  Navigator.pop(ctx); // tutup dialog
+                  Navigator.pop(ctx);
+                  Navigator.pop(ctx);
                 }
               },
               child: const Text('Update'),

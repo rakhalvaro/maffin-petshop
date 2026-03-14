@@ -3,7 +3,7 @@ description: Aplikasi pencatatan untuk Maffin Petshop
 
 publish_to: 'none'
 
-version: 1.0.0+5
+version: 1.0.1+6
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -22,9 +22,10 @@ dependencies:
   http: ^1.2.0
 
   # Update checker
-  package_info_plus: ^5.0.1       # Untuk baca versi app yang terinstall
-  path_provider: ^2.1.2           # Untuk simpan APK sementara saat download
-  open_filex: ^4.3.4              # Untuk buka APK installer setelah download
+  package_info_plus: ^5.0.1
+  path_provider: ^2.1.2
+  open_filex: ^4.3.4
+  permission_handler: ^11.3.0    # TAMBAHAN: Request izin install APK
 
   # UI Components
   cupertino_icons: ^1.0.6
