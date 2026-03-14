@@ -25,33 +25,26 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Controller untuk logo (muncul pertama)
     _logoController = AnimationController(
       duration: const Duration(milliseconds: 700),
       vsync: this,
     );
-
-    // Controller untuk teks nama app
     _textController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-
-    // Controller untuk tagline
     _taglineController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
 
-    // Animasi logo: scale dari kecil + fade in
     _logoScale = Tween<double>(begin: 0.6, end: 1.0).animate(
       CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
     );
     _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _logoController, curve: const Interval(0.0, 0.6)),
+      CurvedAnimation(
+          parent: _logoController, curve: const Interval(0.0, 0.6)),
     );
-
-    // Animasi teks: slide dari bawah + fade in
     _textOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _textController, curve: Curves.easeIn),
     );
@@ -61,38 +54,30 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(
       CurvedAnimation(parent: _textController, curve: Curves.easeOut),
     );
-
-    // Animasi tagline: fade in
     _taglineOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _taglineController, curve: Curves.easeIn),
     );
 
-    // Jalankan animasi secara berurutan
     _runAnimations();
   }
 
   Future<void> _runAnimations() async {
-    // Logo muncul
     await Future.delayed(const Duration(milliseconds: 200));
     _logoController.forward();
 
-    // Teks nama muncul
     await Future.delayed(const Duration(milliseconds: 500));
     _textController.forward();
 
-    // Tagline muncul
     await Future.delayed(const Duration(milliseconds: 400));
     _taglineController.forward();
 
-    // Tunggu total ~2.5 detik lalu pindah ke MainScreen
     await Future.delayed(const Duration(milliseconds: 900));
+
     if (mounted) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              MainScreen(),
-          transitionsBuilder:
-              (context, animation, secondaryAnimation, child) {
+          pageBuilder: (context, animation, secondaryAnimation) => MainScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
           transitionDuration: const Duration(milliseconds: 500),
@@ -112,13 +97,12 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFF8C00), // Warna oranye khas Maffin
+      backgroundColor: const Color(0xFFFF8C00),
       body: SafeArea(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo dengan animasi scale + fade
               AnimatedBuilder(
                 animation: _logoController,
                 builder: (context, child) {
@@ -152,10 +136,7 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
               ),
-
               const SizedBox(height: 32),
-
-              // Nama app dengan animasi slide + fade
               AnimatedBuilder(
                 animation: _textController,
                 builder: (context, child) {
@@ -192,10 +173,7 @@ class _SplashScreenState extends State<SplashScreen>
                   ],
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              // Tagline dengan animasi fade
               AnimatedBuilder(
                 animation: _taglineController,
                 builder: (context, child) {
@@ -214,10 +192,7 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
               ),
-
               const SizedBox(height: 80),
-
-              // Loading indicator kecil di bawah
               AnimatedBuilder(
                 animation: _taglineController,
                 builder: (context, child) {

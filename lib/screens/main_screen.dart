@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'product_screen.dart';
 import 'order_screen.dart';
 import 'report_screen.dart';
+import '../utils/update_checker.dart';
 
 class MainScreen extends StatefulWidget {
   @override
@@ -19,16 +20,28 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Cek update setelah frame pertama selesai render
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          UpdateChecker.checkForUpdate(context);
+        }
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.orange[700],
-        toolbarHeight: 80, // Lebih tinggi supaya muat 3 baris teks
+        toolbarHeight: 80,
         centerTitle: true,
         title: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Bismillah
             Text(
               'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
               style: TextStyle(
@@ -41,7 +54,6 @@ class _MainScreenState extends State<MainScreen> {
               textDirection: TextDirection.rtl,
               textAlign: TextAlign.center,
             ),
-            // Shalawat
             Text(
               'اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ',
               style: TextStyle(
@@ -54,7 +66,6 @@ class _MainScreenState extends State<MainScreen> {
               textDirection: TextDirection.rtl,
               textAlign: TextAlign.center,
             ),
-            // Nama app
             Text(
               'Maffin Petshop',
               style: GoogleFonts.poppins(
