@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'product_screen.dart';
 import 'order_screen.dart';
+import 'service_screen.dart';
 import 'report_screen.dart';
 import '../utils/update_checker.dart';
 
@@ -16,13 +17,13 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     ProductScreen(),
     OrderScreen(),
+    ServiceScreen(),
     ReportScreen(),
   ];
 
   @override
   void initState() {
     super.initState();
-    // Cek update setelah frame pertama selesai render
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(seconds: 1), () {
         if (mounted) {
@@ -84,6 +85,8 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.orange[700],
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed, // Wajib untuk 4+ item
         onTap: (index) {
           setState(() {
             _selectedIndex = index;
@@ -97,6 +100,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart),
             label: 'Pesanan',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.content_cut),
+            label: 'Service',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.analytics),
