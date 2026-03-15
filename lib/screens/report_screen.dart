@@ -34,7 +34,7 @@ class _ReportScreenState extends State<ReportScreen> {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.orange[50], // 🔄 biru → oranye
+        color: Colors.orange[50],
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(16),
           bottomRight: Radius.circular(16),
@@ -45,14 +45,14 @@ class _ReportScreenState extends State<ReportScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.date_range, color: Colors.orange[700]), // 🔄
+              Icon(Icons.date_range, color: Colors.orange[700]),
               SizedBox(width: 8),
               Text(
                 'Periode Laporan:',
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.orange[700], // 🔄
+                  color: Colors.orange[700],
                 ),
               ),
               Spacer(),
@@ -65,9 +65,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   );
                 }).toList(),
                 onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedPeriod = newValue!;
-                  });
+                  setState(() => _selectedPeriod = newValue!);
                 },
               ),
             ],
@@ -78,7 +76,7 @@ class _ReportScreenState extends State<ReportScreen> {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.orange[300]!), // 🔄
+                border: Border.all(color: Colors.orange[300]!),
                 borderRadius: BorderRadius.circular(8),
                 color: Colors.white,
               ),
@@ -86,7 +84,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.calendar_today,
-                      size: 20, color: Colors.orange[700]), // 🔄
+                      size: 20, color: Colors.orange[700]),
                   SizedBox(width: 8),
                   Text(
                     _getDateText(),
@@ -137,7 +135,7 @@ class _ReportScreenState extends State<ReportScreen> {
                       'Total Pesanan',
                       '${financialData['totalOrders']}',
                       Icons.receipt_long,
-                      Colors.orange, // 🔄 biru → oranye
+                      Colors.orange,
                     ),
                   ),
                   SizedBox(width: 12),
@@ -146,7 +144,7 @@ class _ReportScreenState extends State<ReportScreen> {
                       'Total Item',
                       '${financialData['totalItems']}',
                       Icons.inventory,
-                      Colors.amber, // 🔄 oranye gelap
+                      Colors.amber,
                     ),
                   ),
                 ],
@@ -174,20 +172,19 @@ class _ReportScreenState extends State<ReportScreen> {
                 ],
               ),
               SizedBox(height: 12),
-              // Card Laba Bersih
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Colors.orange[500]!, Colors.orange[800]!], // 🔄 ungu → oranye
+                    colors: [Colors.orange[500]!, Colors.orange[800]!],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.orange.withOpacity(0.35), // 🔄
+                      color: Colors.orange.withOpacity(0.35),
                       blurRadius: 6,
                       offset: Offset(0, 3),
                     ),
@@ -343,7 +340,8 @@ class _ReportScreenState extends State<ReportScreen> {
                   child: ExpansionTile(
                     title: Text(
                       'Pesanan ${dateTime.day}/${dateTime.month}/${dateTime.year}',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                      style:
+                          GoogleFonts.poppins(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,6 +356,7 @@ class _ReportScreenState extends State<ReportScreen> {
                           style: GoogleFonts.poppins(),
                         ),
                         SizedBox(height: 4),
+                        // 🔄 Diganti dari Row ke Column supaya tidak overflow
                         Text(
                           'Modal: Rp ${_formatCurrency(orderCost)}',
                           style: GoogleFonts.poppins(
@@ -365,32 +364,27 @@ class _ReportScreenState extends State<ReportScreen> {
                             color: Colors.red[600],
                           ),
                         ),
-                        Row(
-                          children: [
-                            Text(
-                              'Omset: Rp ${_formatCurrency(orderData['total'].toDouble())}',
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green[600],
-                              ),
-                            ),
-                            SizedBox(width: 16),
-                            Text(
-                              'Laba: Rp ${_formatCurrency(orderProfit)}',
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.orange[700], // 🔄 ungu → oranye
-                              ),
-                            ),
-                          ],
+                        Text(
+                          'Omset: Rp ${_formatCurrency(orderData['total'].toDouble())}',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green[600],
+                          ),
+                        ),
+                        Text(
+                          'Laba: Rp ${_formatCurrency(orderProfit)}',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange[700],
+                          ),
                         ),
                       ],
                     ),
                     trailing: Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.orange[700], // 🔄 biru → oranye
+                        color: Colors.orange[700],
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -417,8 +411,10 @@ class _ReportScreenState extends State<ReportScreen> {
                             ),
                             SizedBox(height: 12),
                             ...items.map<Widget>((item) {
-                              double buyPrice = _safeToDouble(item['buyPrice']);
-                              double sellPrice = _safeToDouble(item['price']);
+                              double buyPrice =
+                                  _safeToDouble(item['buyPrice']);
+                              double sellPrice =
+                                  _safeToDouble(item['price']);
                               int quantity = item['quantity'] as int;
                               double itemProfit =
                                   (sellPrice - buyPrice) * quantity;
@@ -431,8 +427,8 @@ class _ReportScreenState extends State<ReportScreen> {
                                 decoration: BoxDecoration(
                                   color: Colors.grey[50],
                                   borderRadius: BorderRadius.circular(8),
-                                  border:
-                                      Border.all(color: Colors.grey[200]!),
+                                  border: Border.all(
+                                      color: Colors.grey[200]!),
                                 ),
                                 child: Column(
                                   crossAxisAlignment:
@@ -461,57 +457,40 @@ class _ReportScreenState extends State<ReportScreen> {
                                       ],
                                     ),
                                     SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Harga Beli: Rp ${_formatCurrency(buyPrice)}',
-                                              style: GoogleFonts.poppins(
-                                                color: Colors.red[600],
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                            Text(
-                                              'Harga Jual: Rp ${_formatCurrency(sellPrice)}',
-                                              style: GoogleFonts.poppins(
-                                                color: Colors.green[600],
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              'Modal: Rp ${_formatCurrency(itemCost)}',
-                                              style: GoogleFonts.poppins(
-                                                color: Colors.red[600],
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                            Text(
-                                              'Omset: Rp ${_formatCurrency(itemRevenue)}',
-                                              style: GoogleFonts.poppins(
-                                                color: Colors.green[600],
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                    // 🔄 Diganti dari Row ke Column supaya tidak overflow
+                                    Text(
+                                      'Harga Beli: Rp ${_formatCurrency(buyPrice)}',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.red[600],
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Harga Jual: Rp ${_formatCurrency(sellPrice)}',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.green[600],
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Modal: Rp ${_formatCurrency(itemCost)}',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.red[600],
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Omset: Rp ${_formatCurrency(itemRevenue)}',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.green[600],
+                                        fontSize: 13,
+                                      ),
                                     ),
                                     SizedBox(height: 8),
                                     Container(
                                       width: double.infinity,
-                                      padding:
-                                          EdgeInsets.symmetric(vertical: 8),
+                                      padding: EdgeInsets.symmetric(
+                                          vertical: 8),
                                       decoration: BoxDecoration(
                                         color: itemProfit > 0
                                             ? Colors.green[100]
