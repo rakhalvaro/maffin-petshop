@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/models.dart';
+import '../utils/currency_formatter.dart';
 
 class OrderScreen extends StatefulWidget {
   @override
@@ -20,7 +21,6 @@ class _OrderScreenState extends State<OrderScreen> {
     );
   }
 
-  // ── Stock helpers ──────────────────────────────────────────────────────────
   Color _getStockColor(int stock) {
     if (stock > 10) return Colors.green;
     if (stock >= 1) return Colors.orange;
@@ -32,7 +32,6 @@ class _OrderScreenState extends State<OrderScreen> {
     if (stock >= 1) return 'Rendah';
     return 'Habis';
   }
-  // ──────────────────────────────────────────────────────────────────────────
 
   List<Product> _filterProducts(List<Product> products) {
     if (_searchQuery.isEmpty) return products;
@@ -169,10 +168,8 @@ class _OrderScreenState extends State<OrderScreen> {
                         padding: const EdgeInsets.all(12),
                         child: Row(
                           children: [
-                            // Gambar produk
                             _buildProductImage(product),
                             const SizedBox(width: 12),
-                            // Info produk
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,13 +182,12 @@ class _OrderScreenState extends State<OrderScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Rp ${product.sellPrice.toStringAsFixed(0)}',
+                                    'Rp ${product.sellPrice.toRupiah()}',
                                     style: TextStyle(
                                         color: Colors.green[700],
                                         fontWeight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 2),
-                                  // Indikator stok lengkap
                                   Row(
                                     children: [
                                       Text(
@@ -220,7 +216,6 @@ class _OrderScreenState extends State<OrderScreen> {
                                 ],
                               ),
                             ),
-                            // Tombol tambah / counter
                             inCart
                                 ? Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -252,7 +247,8 @@ class _OrderScreenState extends State<OrderScreen> {
                                       ),
                                       Container(
                                         decoration: BoxDecoration(
-                                          color: product.stock > cartItem.quantity
+                                          color: product.stock >
+                                                  cartItem.quantity
                                               ? Colors.orange[700]
                                               : Colors.grey[400],
                                           shape: BoxShape.circle,
@@ -300,7 +296,7 @@ class _OrderScreenState extends State<OrderScreen> {
               backgroundColor: Colors.orange[700],
               icon: const Icon(Icons.shopping_cart, color: Colors.white),
               label: Text(
-                'Checkout  •  Rp ${_cartTotal.toStringAsFixed(0)}',
+                'Checkout  •  Rp ${_cartTotal.toRupiah()}',
                 style: const TextStyle(
                     color: Colors.white, fontWeight: FontWeight.bold),
               ),
@@ -397,7 +393,7 @@ class _OrderScreenState extends State<OrderScreen> {
                       leading: _buildProductImage(item.product, size: 44),
                       title: Text(item.product.name),
                       subtitle: Text(
-                          'Rp ${item.product.sellPrice.toStringAsFixed(0)}'),
+                          'Rp ${item.product.sellPrice.toRupiah()}'),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -434,7 +430,7 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
               const Divider(),
               Text(
-                'Total: Rp ${_cartTotal.toStringAsFixed(0)}',
+                'Total: Rp ${_cartTotal.toRupiah()}',
                 style: const TextStyle(
                     fontSize: 18, fontWeight: FontWeight.bold),
               ),
@@ -487,7 +483,7 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Total: Rp ${_cartTotal.toStringAsFixed(0)}',
+                'Total: Rp ${_cartTotal.toRupiah()}',
                 style: const TextStyle(
                     fontSize: 18, fontWeight: FontWeight.bold),
               ),

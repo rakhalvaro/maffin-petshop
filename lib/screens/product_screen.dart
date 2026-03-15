@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/models.dart';
+import '../utils/currency_formatter.dart';
 
 class ProductScreen extends StatefulWidget {
   @override
@@ -20,7 +21,6 @@ class _ProductScreenState extends State<ProductScreen> {
   static const String _cloudName = 'dwx1lavrx';
   static const String _uploadPreset = 'maffin petshop';
 
-  // ── Stock helpers ──────────────────────────────────────────────────────────
   Color _getStockColor(int stock) {
     if (stock > 10) return Colors.green;
     if (stock >= 1) return Colors.orange;
@@ -32,7 +32,6 @@ class _ProductScreenState extends State<ProductScreen> {
     if (stock >= 1) return 'Rendah';
     return 'Habis';
   }
-  // ──────────────────────────────────────────────────────────────────────────
 
   List<Product> _filterProducts(List<Product> products) {
     if (_searchQuery.isEmpty) return products;
@@ -80,7 +79,6 @@ class _ProductScreenState extends State<ProductScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // Search Bar
           Container(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
@@ -106,7 +104,6 @@ class _ProductScreenState extends State<ProductScreen> {
               onChanged: (v) => setState(() => _searchQuery = v),
             ),
           ),
-          // Product List
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _firestore
@@ -160,10 +157,8 @@ class _ProductScreenState extends State<ProductScreen> {
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                                'Beli: Rp ${product.buyPrice.toStringAsFixed(0)}'),
-                            Text(
-                                'Jual: Rp ${product.sellPrice.toStringAsFixed(0)}'),
+                            Text('Beli: Rp ${product.buyPrice.toRupiah()}'),
+                            Text('Jual: Rp ${product.sellPrice.toRupiah()}'),
                             Row(
                               children: [
                                 Text('Stok: ${product.stock} - '),
@@ -369,9 +364,9 @@ class _ProductScreenState extends State<ProductScreen> {
     final stockCtrl =
         TextEditingController(text: product.stock.toString());
     final buyCtrl =
-        TextEditingController(text: product.buyPrice.toString());
+        TextEditingController(text: product.buyPrice.toStringAsFixed(0));
     final sellCtrl =
-        TextEditingController(text: product.sellPrice.toString());
+        TextEditingController(text: product.sellPrice.toStringAsFixed(0));
     XFile? selectedImage;
 
     showDialog(
@@ -395,8 +390,8 @@ class _ProductScreenState extends State<ProductScreen> {
                         height: 100,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                              color: Colors.orange, width: 2),
+                          border:
+                              Border.all(color: Colors.orange, width: 2),
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
@@ -465,8 +460,7 @@ class _ProductScreenState extends State<ProductScreen> {
                 );
                 String? imageUrl = product.imageUrl;
                 if (selectedImage != null) {
-                  final newUrl =
-                      await _uploadToCloudinary(selectedImage!);
+                  final newUrl = await _uploadToCloudinary(selectedImage!);
                   if (newUrl != null) {
                     imageUrl = newUrl;
                   } else if (mounted) {
