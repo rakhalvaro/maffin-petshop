@@ -1,2 +1,2 @@
 # maffin-petshop
-aplikasi kasir dan pencatatan Maffin Petshop
+Aplikasi Kasir dan Pencatatan Maffin Petshop
