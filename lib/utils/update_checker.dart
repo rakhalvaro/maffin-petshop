@@ -171,14 +171,12 @@ class _UpdateDialogState extends State<_UpdateDialog> {
     try {
       debugPrint('Starting download from: ${widget.downloadUrl}');
 
-      // Download dengan progress tracking
       final request = http.Request('GET', Uri.parse(widget.downloadUrl));
       final response = await http.Client().send(request);
       final contentLength = response.contentLength ?? 0;
 
       debugPrint('Content length: $contentLength');
 
-      // Kumpulkan semua bytes dengan progress
       final List<int> bytes = [];
       await for (final chunk in response.stream) {
         bytes.addAll(chunk);
@@ -198,6 +196,13 @@ class _UpdateDialogState extends State<_UpdateDialog> {
       final tempDir = await getTemporaryDirectory();
       final apkPath = '${tempDir.path}/maffin_update.apk';
       final apkFile = File(apkPath);
+
+      // Hapus file APK lama jika ada supaya tidak konflik dengan versi baru
+      if (await apkFile.exists()) {
+        await apkFile.delete();
+        debugPrint('Old APK deleted');
+      }
+
       await apkFile.writeAsBytes(bytes, flush: true);
 
       debugPrint('File written to: $apkPath');
