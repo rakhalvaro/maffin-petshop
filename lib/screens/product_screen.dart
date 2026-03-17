@@ -74,6 +74,88 @@ class _ProductScreenState extends State<ProductScreen> {
     }
   }
 
+  // Pop up gambar besar saat di-tap
+  void _showImageDialog(BuildContext context, Product product) {
+    if (product.imageUrl == null || product.imageUrl!.isEmpty) return;
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => GestureDetector(
+        onTap: () => Navigator.pop(ctx),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.all(24),
+          child: GestureDetector(
+            onTap: () {},
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[700],
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                  ),
+                  child: Text(
+                    product.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(16),
+                    bottomRight: Radius.circular(16),
+                  ),
+                  child: Image.network(
+                    product.imageUrl!,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    loadingBuilder: (_, child, progress) =>
+                        progress == null
+                            ? child
+                            : Container(
+                                height: 300,
+                                color: Colors.grey[900],
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white),
+                                ),
+                              ),
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 200,
+                      color: Colors.grey[900],
+                      child: const Center(
+                        child: Icon(Icons.broken_image,
+                            color: Colors.white54, size: 64),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Tap di luar gambar untuk menutup',
+                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -133,7 +215,8 @@ class _ProductScreenState extends State<ProductScreen> {
                         Icon(Icons.search_off, size: 64, color: Colors.grey),
                         const SizedBox(height: 16),
                         Text('Produk tidak ditemukan',
-                            style: TextStyle(fontSize: 18, color: Colors.grey)),
+                            style:
+                                TextStyle(fontSize: 18, color: Colors.grey)),
                         Text('Coba kata kunci lain',
                             style: TextStyle(color: Colors.grey)),
                       ],
@@ -150,15 +233,17 @@ class _ProductScreenState extends State<ProductScreen> {
                           horizontal: 12, vertical: 6),
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(12),
-                        leading: _buildProductImage(product),
+                        leading: _buildTappableImage(product),
                         title: Text(product.name,
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold)),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Beli: Rp ${product.buyPrice.toRupiah()}'),
-                            Text('Jual: Rp ${product.sellPrice.toRupiah()}'),
+                            Text(
+                                'Beli: Rp ${product.buyPrice.toRupiah()}'),
+                            Text(
+                                'Jual: Rp ${product.sellPrice.toRupiah()}'),
                             Row(
                               children: [
                                 Text('Stok: ${product.stock} - '),
@@ -200,29 +285,58 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
-  Widget _buildProductImage(Product product, {double size = 60}) {
-    if (product.imageUrl != null && product.imageUrl!.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          product.imageUrl!,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          loadingBuilder: (_, child, progress) => progress == null
-              ? child
-              : Container(
-                  width: size,
-                  height: size,
-                  color: Colors.grey[200],
-                  child: const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2)),
+  // Gambar yang bisa di-tap — ukuran 80px + icon zoom
+  Widget _buildTappableImage(Product product, {double size = 80}) {
+    final hasImage =
+        product.imageUrl != null && product.imageUrl!.isNotEmpty;
+
+    return GestureDetector(
+      onTap: hasImage ? () => _showImageDialog(context, product) : null,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: hasImage
+                ? Image.network(
+                    product.imageUrl!,
+                    width: size,
+                    height: size,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (_, child, progress) =>
+                        progress == null
+                            ? child
+                            : Container(
+                                width: size,
+                                height: size,
+                                color: Colors.grey[200],
+                                child: const Center(
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2)),
+                              ),
+                    errorBuilder: (_, __, ___) => _placeholder(size),
+                  )
+                : _placeholder(size),
+          ),
+          if (hasImage)
+            Positioned(
+              bottom: 2,
+              right: 2,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(4),
                 ),
-          errorBuilder: (_, __, ___) => _placeholder(size),
-        ),
-      );
-    }
-    return _placeholder(size);
+                child: const Icon(
+                  Icons.zoom_in,
+                  color: Colors.white,
+                  size: 14,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   Widget _placeholder(double size) => Container(
