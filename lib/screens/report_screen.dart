@@ -11,7 +11,7 @@ class _ReportScreenState extends State<ReportScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String _selectedPeriod = 'Harian';
   DateTime _selectedDate = DateTime.now();
-  String _selectedFilter = 'Semua'; // Filter: Semua, Produk, Service
+  String _selectedFilter = 'Semua';
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +32,6 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  // ── Filter Produk / Service / Semua ───────────────────────────────────────
   Widget _buildFilterSelector() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -49,9 +48,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   color: isSelected ? Colors.orange[700] : Colors.grey[100],
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isSelected
-                        ? Colors.orange[700]!
-                        : Colors.grey[300]!,
+                    color: isSelected ? Colors.orange[700]! : Colors.grey[300]!,
                   ),
                 ),
                 child: Text(
@@ -115,8 +112,7 @@ class _ReportScreenState extends State<ReportScreen> {
           InkWell(
             onTap: () => _selectDate(context),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.orange[300]!),
                 borderRadius: BorderRadius.circular(8),
@@ -125,8 +121,7 @@ class _ReportScreenState extends State<ReportScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.calendar_today,
-                      size: 20, color: Colors.orange[700]),
+                  Icon(Icons.calendar_today, size: 20, color: Colors.orange[700]),
                   const SizedBox(width: 8),
                   Text(
                     _getDateText(),
@@ -308,18 +303,15 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildOrdersSliver() {
-    // Tampilkan berdasarkan filter
     if (_selectedFilter == 'Produk') {
       return _buildProductOrdersSliver();
     } else if (_selectedFilter == 'Service') {
       return _buildServiceOrdersSliver();
     } else {
-      // Semua: gabungkan keduanya
       return _buildAllOrdersSliver();
     }
   }
 
-  // ── Sliver untuk pesanan produk ───────────────────────────────────────────
   Widget _buildProductOrdersSliver() {
     return StreamBuilder<QuerySnapshot>(
       stream: _getFilteredOrdersStream(),
@@ -342,7 +334,6 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  // ── Sliver untuk service ──────────────────────────────────────────────────
   Widget _buildServiceOrdersSliver() {
     return StreamBuilder<QuerySnapshot>(
       stream: _getFilteredServicesStream(),
@@ -365,16 +356,13 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  // ── Sliver untuk semua (produk + service) ─────────────────────────────────
   Widget _buildAllOrdersSliver() {
     return SliverToBoxAdapter(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section produk
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
               '🛒 Penjualan Produk',
               style: GoogleFonts.poppins(
@@ -393,16 +381,12 @@ class _ReportScreenState extends State<ReportScreen> {
               final orders = snapshot.data!.docs;
               if (orders.isEmpty) return _emptyState('produk');
               return Column(
-                children: orders
-                    .map((doc) => _buildProductOrderCard(doc))
-                    .toList(),
+                children: orders.map((doc) => _buildProductOrderCard(doc)).toList(),
               );
             },
           ),
-          // Section service
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
               '✂️ Jasa Service',
               style: GoogleFonts.poppins(
@@ -421,9 +405,7 @@ class _ReportScreenState extends State<ReportScreen> {
               final services = snapshot.data!.docs;
               if (services.isEmpty) return _emptyState('service');
               return Column(
-                children: services
-                    .map((doc) => _buildServiceCard(doc))
-                    .toList(),
+                children: services.map((doc) => _buildServiceCard(doc)).toList(),
               );
             },
           ),
@@ -456,8 +438,7 @@ class _ReportScreenState extends State<ReportScreen> {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Theme(
-        data:
-            Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           title: Text(
             'Pesanan ${dateTime.day}/${dateTime.month}/${dateTime.year}',
@@ -476,34 +457,29 @@ class _ReportScreenState extends State<ReportScreen> {
               Text(
                 'Modal: Rp ${_formatCurrency(orderCost)}',
                 style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red[600]),
+                    fontWeight: FontWeight.bold, color: Colors.red[600]),
               ),
               Text(
-                'Omset: Rp ${_formatCurrency(orderData['total'].toDouble())}',
+                'Omset: Rp ${_formatCurrency(_safeToDouble(orderData['total']))}',
                 style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green[600]),
+                    fontWeight: FontWeight.bold, color: Colors.green[600]),
               ),
               Text(
                 'Laba: Rp ${_formatCurrency(orderProfit)}',
                 style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange[700]),
+                    fontWeight: FontWeight.bold, color: Colors.orange[700]),
               ),
             ],
           ),
           trailing: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.orange[700],
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               '${items.fold<int>(0, (sum, item) => sum + (item['quantity'] as int))} pcs',
-              style: GoogleFonts.poppins(
-                  color: Colors.white, fontSize: 12),
+              style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
             ),
           ),
           children: [
@@ -521,8 +497,7 @@ class _ReportScreenState extends State<ReportScreen> {
                     double buyPrice = _safeToDouble(item['buyPrice']);
                     double sellPrice = _safeToDouble(item['price']);
                     int quantity = item['quantity'] as int;
-                    double itemProfit =
-                        (sellPrice - buyPrice) * quantity;
+                    double itemProfit = (sellPrice - buyPrice) * quantity;
                     double itemCost = buyPrice * quantity;
                     double itemRevenue = sellPrice * quantity;
 
@@ -538,8 +513,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
                                 child: Text(item['productName'],
@@ -549,33 +523,26 @@ class _ReportScreenState extends State<ReportScreen> {
                               ),
                               Text('${quantity}x',
                                   style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16)),
+                                      fontWeight: FontWeight.bold, fontSize: 16)),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                              'Harga Beli: Rp ${_formatCurrency(buyPrice)}',
+                          Text('Harga Beli: Rp ${_formatCurrency(buyPrice)}',
                               style: GoogleFonts.poppins(
                                   color: Colors.red[600], fontSize: 13)),
-                          Text(
-                              'Harga Jual: Rp ${_formatCurrency(sellPrice)}',
+                          Text('Harga Jual: Rp ${_formatCurrency(sellPrice)}',
                               style: GoogleFonts.poppins(
-                                  color: Colors.green[600],
-                                  fontSize: 13)),
+                                  color: Colors.green[600], fontSize: 13)),
                           Text('Modal: Rp ${_formatCurrency(itemCost)}',
                               style: GoogleFonts.poppins(
                                   color: Colors.red[600], fontSize: 13)),
-                          Text(
-                              'Omset: Rp ${_formatCurrency(itemRevenue)}',
+                          Text('Omset: Rp ${_formatCurrency(itemRevenue)}',
                               style: GoogleFonts.poppins(
-                                  color: Colors.green[600],
-                                  fontSize: 13)),
+                                  color: Colors.green[600], fontSize: 13)),
                           const SizedBox(height: 8),
                           Container(
                             width: double.infinity,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
                               color: itemProfit > 0
                                   ? Colors.green[100]
@@ -615,8 +582,7 @@ class _ReportScreenState extends State<ReportScreen> {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Theme(
-        data:
-            Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           leading: Container(
             padding: const EdgeInsets.all(6),
@@ -644,24 +610,21 @@ class _ReportScreenState extends State<ReportScreen> {
               Text('Pembayaran: ${data['paymentMethod']}',
                   style: GoogleFonts.poppins(fontSize: 12)),
               Text(
-                'Total: Rp ${_formatCurrency((data['total'] ?? data['price']).toDouble())}',
+                'Total: Rp ${_formatCurrency(_safeToDouble(data['total'] ?? data['price']))}',
                 style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green[600]),
+                    fontWeight: FontWeight.bold, color: Colors.green[600]),
               ),
             ],
           ),
           trailing: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: isGrooming ? Colors.purple[400] : Colors.blue[400],
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               isGrooming ? 'Grooming' : 'Nitip',
-              style: GoogleFonts.poppins(
-                  color: Colors.white, fontSize: 12),
+              style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
             ),
           ),
           children: [
@@ -682,36 +645,45 @@ class _ReportScreenState extends State<ReportScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _detailRow('Jenis Grooming', data['serviceType']),
+        _detailRow('Jenis Grooming', data['serviceType'] ?? '-'),
         _detailRow(
-            'Total', 'Rp ${_formatCurrency(data['price'].toDouble())}',
+            'Total', 'Rp ${_formatCurrency(_safeToDouble(data['price']))}',
             isBold: true, valueColor: Colors.green[700]),
       ],
     );
   }
 
+  // ✅ FIXED: hapus bringFood & foodPricePerDay yang sudah tidak ada di Firestore
   Widget _buildPenitipanDetail(Map<String, dynamic> data) {
-    final days = data['days'] as int;
-    final bringFood = data['bringFood'] as bool;
-    final discount = (data['discount'] as num).toDouble();
+    final days = (data['days'] as num?)?.toInt() ?? 0;
+    final discount = (data['discount'] as num? ?? 0).toDouble();
+    final total = (data['total'] as num? ?? 0).toDouble();
+    final pricePerDay = (data['pricePerDay'] as num? ?? 0).toDouble();
+    final dp = (data['dp'] as num? ?? 0).toDouble();
+    final isPaid = data['isPaid'] as bool? ?? false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _detailRow('Owner', data['ownerName'] ?? '-'),
+        _detailRow('No. WA', data['ownerPhone'] ?? '-'),
+        const Divider(height: 16),
+        _detailRow('Harga/hari', 'Rp ${_formatCurrency(pricePerDay)}'),
         _detailRow('Jumlah hari', '$days hari'),
-        _detailRow('Harga/hari',
-            'Rp ${_formatCurrency((data['pricePerDay'] as num).toDouble())}'),
-        _detailRow('Bawa makanan', bringFood ? 'Ya' : 'Tidak'),
-        if (!bringFood)
-          _detailRow('Harga makanan/hari',
-              'Rp ${_formatCurrency((data['foodPricePerDay'] as num).toDouble())}'),
         if (discount > 0)
           _detailRow('Diskon', '- Rp ${_formatCurrency(discount)}',
               valueColor: Colors.red[600]),
-        const Divider(),
-        _detailRow(
-            'Total', 'Rp ${_formatCurrency((data['total'] as num).toDouble())}',
+        const Divider(height: 16),
+        _detailRow('Total', 'Rp ${_formatCurrency(total)}',
             isBold: true, valueColor: Colors.green[700]),
+        if (dp > 0)
+          _detailRow('DP dibayar', 'Rp ${_formatCurrency(dp)}',
+              valueColor: Colors.orange[700]),
+        if (dp > 0 && !isPaid)
+          _detailRow('Sisa pembayaran', 'Rp ${_formatCurrency(total - dp)}',
+              isBold: true, valueColor: Colors.red[600]),
+        if (isPaid)
+          _detailRow('Status', '✅ Lunas', valueColor: Colors.green[700]),
       ],
     );
   }
@@ -724,13 +696,12 @@ class _ReportScreenState extends State<ReportScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: GoogleFonts.poppins(
-                  fontSize: 13, color: Colors.grey[600])),
+              style:
+                  GoogleFonts.poppins(fontSize: 13, color: Colors.grey[600])),
           Text(value,
               style: GoogleFonts.poppins(
                 fontSize: 13,
-                fontWeight:
-                    isBold ? FontWeight.bold : FontWeight.w500,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
                 color: valueColor,
               )),
         ],
@@ -738,16 +709,13 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  // ── Streams ───────────────────────────────────────────────────────────────
-
   Stream<QuerySnapshot> _getFilteredOrdersStream() {
     final range = _getDateRange();
     return _firestore
         .collection('orders')
         .where('dateTime',
             isGreaterThanOrEqualTo: range['start']!.toIso8601String())
-        .where('dateTime',
-            isLessThan: range['end']!.toIso8601String())
+        .where('dateTime', isLessThan: range['end']!.toIso8601String())
         .orderBy('dateTime', descending: true)
         .snapshots();
   }
@@ -758,8 +726,7 @@ class _ReportScreenState extends State<ReportScreen> {
         .collection('services')
         .where('dateTime',
             isGreaterThanOrEqualTo: range['start']!.toIso8601String())
-        .where('dateTime',
-            isLessThan: range['end']!.toIso8601String())
+        .where('dateTime', isLessThan: range['end']!.toIso8601String())
         .orderBy('dateTime', descending: true)
         .snapshots();
   }
@@ -773,10 +740,8 @@ class _ReportScreenState extends State<ReportScreen> {
         endDate = startDate.add(const Duration(days: 1));
         break;
       case 'Bulanan':
-        startDate =
-            DateTime(_selectedDate.year, _selectedDate.month, 1);
-        endDate =
-            DateTime(_selectedDate.year, _selectedDate.month + 1, 1);
+        startDate = DateTime(_selectedDate.year, _selectedDate.month, 1);
+        endDate = DateTime(_selectedDate.year, _selectedDate.month + 1, 1);
         break;
       case 'Tahunan':
         startDate = DateTime(_selectedDate.year, 1, 1);
@@ -789,8 +754,6 @@ class _ReportScreenState extends State<ReportScreen> {
     return {'start': startDate, 'end': endDate};
   }
 
-  // ── Kalkulasi finansial ───────────────────────────────────────────────────
-
   Future<Map<String, dynamic>> _calculateAllFinancials() async {
     final range = _getDateRange();
     int totalOrders = 0;
@@ -799,14 +762,12 @@ class _ReportScreenState extends State<ReportScreen> {
     double totalCost = 0;
     double netProfit = 0;
 
-    // Hitung dari orders (produk)
     if (_selectedFilter == 'Semua' || _selectedFilter == 'Produk') {
       final ordersSnap = await _firestore
           .collection('orders')
           .where('dateTime',
               isGreaterThanOrEqualTo: range['start']!.toIso8601String())
-          .where('dateTime',
-              isLessThan: range['end']!.toIso8601String())
+          .where('dateTime', isLessThan: range['end']!.toIso8601String())
           .get();
 
       totalOrders += ordersSnap.docs.length;
@@ -826,20 +787,17 @@ class _ReportScreenState extends State<ReportScreen> {
       }
     }
 
-    // Hitung dari services (grooming & penitipan)
     if (_selectedFilter == 'Semua' || _selectedFilter == 'Service') {
       final servicesSnap = await _firestore
           .collection('services')
           .where('dateTime',
               isGreaterThanOrEqualTo: range['start']!.toIso8601String())
-          .where('dateTime',
-              isLessThan: range['end']!.toIso8601String())
+          .where('dateTime', isLessThan: range['end']!.toIso8601String())
           .get();
 
       totalOrders += servicesSnap.docs.length;
       for (var doc in servicesSnap.docs) {
         final data = doc.data();
-        // Service tidak punya modal, jadi semua revenue = laba
         final revenue = data['type'] == 'grooming'
             ? _safeToDouble(data['price'])
             : _safeToDouble(data['total']);
@@ -893,8 +851,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
   String _calculateItemMargin(double sellPrice, double buyPrice) {
     if (sellPrice == 0) return '0';
-    return (((sellPrice - buyPrice) / sellPrice) * 100)
-        .toStringAsFixed(1);
+    return (((sellPrice - buyPrice) / sellPrice) * 100).toStringAsFixed(1);
   }
 
   String _formatCurrency(double amount) {
@@ -941,8 +898,7 @@ class _ReportScreenState extends State<ReportScreen> {
         selectableDayPredicate: (DateTime date) => date.day == 1,
       );
       if (picked != null) {
-        setState(() =>
-            _selectedDate = DateTime(picked.year, picked.month, 1));
+        setState(() => _selectedDate = DateTime(picked.year, picked.month, 1));
       }
     } else if (_selectedPeriod == 'Tahunan') {
       final DateTime? picked = await showDatePicker(
