@@ -105,6 +105,10 @@ class _GroomingTabState extends State<_GroomingTab> {
             itemBuilder: (context, index) {
               final data = services[index].data() as Map<String, dynamic>;
               final dateTime = DateTime.parse(data['dateTime']);
+              final price = (data['price'] as num).toDouble();
+              final modal = (data['modal'] as num? ?? 0).toDouble();
+              final laba = price - modal;
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -136,9 +140,31 @@ class _GroomingTabState extends State<_GroomingTab> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text('Rp ${(data['price'] as num).toRupiah()}',
+                          Text('Rp ${price.toRupiah()}',
                               style: GoogleFonts.poppins(
                                   fontWeight: FontWeight.bold, color: Colors.green[700], fontSize: 15)),
+                          const SizedBox(height: 2),
+                          Text('Modal: Rp ${modal.toRupiah()}',
+                              style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500])),
+                          Container(
+                            margin: const EdgeInsets.only(top: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: laba >= 0 ? Colors.green[50] : Colors.red[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: laba >= 0 ? Colors.green[200]! : Colors.red[200]!,
+                              ),
+                            ),
+                            child: Text(
+                              'Laba: Rp ${laba.toRupiah()}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: laba >= 0 ? Colors.green[700] : Colors.red[600],
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -157,7 +183,6 @@ class _GroomingTabState extends State<_GroomingTab> {
           );
         },
       ),
-      // ✅ FIX 1: FAB grooming jadi lingkaran kecil
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddGroomingDialog(context),
         backgroundColor: Colors.orange[700],
@@ -170,65 +195,132 @@ class _GroomingTabState extends State<_GroomingTab> {
     final catNameCtrl = TextEditingController();
     final serviceTypeCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
+    final modalCtrl = TextEditingController();
     String selectedPayment = 'Cash';
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (ctx, setDialog) => AlertDialog(
-          title: Text('Tambah Grooming',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: catNameCtrl,
-                    decoration: InputDecoration(labelText: 'Nama Kucing',
-                        prefixIcon: const Icon(Icons.pets),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)))),
-                const SizedBox(height: 12),
-                TextField(controller: serviceTypeCtrl,
-                    decoration: InputDecoration(labelText: 'Jenis Grooming',
-                        hintText: 'contoh: Mandi + Potong Kuku',
-                        prefixIcon: const Icon(Icons.content_cut),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)))),
-                const SizedBox(height: 12),
-                TextField(controller: priceCtrl, keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: 'Harga', prefixText: 'Rp ',
-                        prefixIcon: const Icon(Icons.attach_money),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)))),
-                const SizedBox(height: 12),
-                _paymentSelector(selectedPayment, (v) => setDialog(() => selectedPayment = v)),
-              ],
+        builder: (ctx, setDialog) {
+          final price = double.tryParse(priceCtrl.text) ?? 0;
+          final modal = double.tryParse(modalCtrl.text) ?? 0;
+          final laba = price - modal;
+
+          return AlertDialog(
+            title: Text('Tambah Grooming',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: catNameCtrl,
+                    decoration: InputDecoration(
+                      labelText: 'Nama Kucing',
+                      prefixIcon: const Icon(Icons.pets),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: serviceTypeCtrl,
+                    decoration: InputDecoration(
+                      labelText: 'Jenis Grooming',
+                      hintText: 'contoh: Mandi + Potong Kuku',
+                      prefixIcon: const Icon(Icons.content_cut),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: priceCtrl,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setDialog(() {}),
+                    decoration: InputDecoration(
+                      labelText: 'Harga Jual',
+                      prefixText: 'Rp ',
+                      prefixIcon: const Icon(Icons.attach_money),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: modalCtrl,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setDialog(() {}),
+                    decoration: InputDecoration(
+                      labelText: 'Modal (air + shampo + listrik)',
+                      prefixText: 'Rp ',
+                      prefixIcon: const Icon(Icons.water_drop_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                  // Preview laba real-time
+                  if (price > 0 || modal > 0) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: laba >= 0 ? Colors.green[50] : Colors.red[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: laba >= 0 ? Colors.green[200]! : Colors.red[200]!,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Estimasi Laba',
+                              style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[600])),
+                          Text(
+                            'Rp ${laba.toRupiah()}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: laba >= 0 ? Colors.green[700] : Colors.red[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  _paymentSelector(selectedPayment, (v) => setDialog(() => selectedPayment = v)),
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx),
-                child: Text('Batal', style: GoogleFonts.poppins())),
-            ElevatedButton(
-              onPressed: () async {
-                if (catNameCtrl.text.isEmpty || serviceTypeCtrl.text.isEmpty || priceCtrl.text.isEmpty) return;
-                await _firestore.collection('services').add({
-                  'type': 'grooming',
-                  'catName': catNameCtrl.text,
-                  'serviceType': serviceTypeCtrl.text,
-                  'price': double.tryParse(priceCtrl.text) ?? 0,
-                  'paymentMethod': selectedPayment,
-                  'dateTime': DateTime.now().toIso8601String(),
-                });
-                if (ctx.mounted) Navigator.pop(ctx);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Grooming berhasil dicatat!'),
-                          backgroundColor: Colors.green));
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange[700], foregroundColor: Colors.white),
-              child: Text('Simpan', style: GoogleFonts.poppins()),
-            ),
-          ],
-        ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Batal', style: GoogleFonts.poppins()),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (catNameCtrl.text.isEmpty || serviceTypeCtrl.text.isEmpty || priceCtrl.text.isEmpty) return;
+                  await _firestore.collection('services').add({
+                    'type': 'grooming',
+                    'catName': catNameCtrl.text,
+                    'serviceType': serviceTypeCtrl.text,
+                    'price': double.tryParse(priceCtrl.text) ?? 0,
+                    'modal': double.tryParse(modalCtrl.text) ?? 0,
+                    'paymentMethod': selectedPayment,
+                    'dateTime': DateTime.now().toIso8601String(),
+                  });
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Grooming berhasil dicatat!'),
+                            backgroundColor: Colors.green));
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange[700], foregroundColor: Colors.white),
+                child: Text('Simpan', style: GoogleFonts.poppins()),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -240,15 +332,21 @@ class _GroomingTabState extends State<_GroomingTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(padding: const EdgeInsets.only(left: 12, top: 8),
-              child: Text('Metode Pembayaran',
-                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]))),
-          RadioListTile<String>(title: Text('Cash', style: GoogleFonts.poppins()),
-              value: 'Cash', groupValue: selected,
-              onChanged: (v) => onChanged(v!), dense: true),
-          RadioListTile<String>(title: Text('QRIS', style: GoogleFonts.poppins()),
-              value: 'QRIS', groupValue: selected,
-              onChanged: (v) => onChanged(v!), dense: true),
+          Padding(
+            padding: const EdgeInsets.only(left: 12, top: 8),
+            child: Text('Metode Pembayaran',
+                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+          ),
+          RadioListTile<String>(
+            title: Text('Cash', style: GoogleFonts.poppins()),
+            value: 'Cash', groupValue: selected,
+            onChanged: (v) => onChanged(v!), dense: true,
+          ),
+          RadioListTile<String>(
+            title: Text('QRIS', style: GoogleFonts.poppins()),
+            value: 'QRIS', groupValue: selected,
+            onChanged: (v) => onChanged(v!), dense: true,
+          ),
         ],
       ),
     );
@@ -358,7 +456,7 @@ class _PenitipanTabState extends State<_PenitipanTab> {
               final data = services[index].data() as Map<String, dynamic>;
               final checkIn = DateTime.parse(data['checkIn']);
               final checkOut = DateTime.parse(data['checkOut']);
-              final days = checkOut.difference(checkIn).inDays;
+              final days = checkOut.difference(checkIn).inDays + 1; // fix: hitung hari masuk
               final total = (data['total'] as num).toDouble();
               final dp = (data['dp'] as num? ?? 0).toDouble();
               final isPaid = data['isPaid'] as bool? ?? false;
@@ -409,7 +507,6 @@ class _PenitipanTabState extends State<_PenitipanTab> {
                             : Colors.orange[700],
                         size: 22),
                   ),
-                  // ✅ FIX 2: Badge di pojok kanan, nama kucing tidak overlap
                   title: Row(
                     children: [
                       Expanded(
@@ -422,7 +519,6 @@ class _PenitipanTabState extends State<_PenitipanTab> {
                       _buildBadge(status),
                     ],
                   ),
-                  // ✅ FIX 3: Subtitle pakai Flexible supaya WA button tidak overflow
                   subtitle: Padding(
                     padding: const EdgeInsets.only(top: 6, bottom: 6),
                     child: Column(
@@ -631,7 +727,6 @@ class _PenitipanTabState extends State<_PenitipanTab> {
           );
         },
       ),
-      // ✅ FIX 1: FAB penitipan jadi lingkaran kecil
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddPenitipanDialog(context),
         backgroundColor: Colors.orange[700],
@@ -923,7 +1018,7 @@ class _PenitipanTabState extends State<_PenitipanTab> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (ctx, setDialog) {
-          final days = checkOut.difference(checkIn).inDays;
+          final days = checkOut.difference(checkIn).inDays + 1; // fix: hitung hari masuk
           final discount = double.tryParse(discountCtrl.text) ?? 0;
           final dp = double.tryParse(dpCtrl.text) ?? 0;
           final total = (_pricePerDay * days) - discount;

@@ -3,7 +3,7 @@ description: Aplikasi pencatatan untuk Maffin Petshop
 
 publish_to: 'none'
 
-version: 1.0.4+8
+version: 1.0.5+9
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -28,7 +28,7 @@ dependencies:
   permission_handler: ^11.3.0
 
   # WhatsApp
-  url_launcher: ^6.2.5            # TAMBAHAN: Untuk buka WhatsApp
+  url_launcher: ^6.2.5 
 
   # UI Components
   cupertino_icons: ^1.0.6

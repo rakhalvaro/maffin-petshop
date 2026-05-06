@@ -190,7 +190,6 @@ class _ProductScreenState extends State<ProductScreen> {
             child: StreamBuilder<QuerySnapshot>(
               stream: _firestore
                   .collection('products')
-                  .orderBy('name')
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -203,7 +202,8 @@ class _ProductScreenState extends State<ProductScreen> {
                 final allProducts = snapshot.data!.docs
                     .map((doc) => Product.fromMap(
                         doc.id, doc.data() as Map<String, dynamic>))
-                    .toList();
+                    .toList()
+                  ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
                 final filtered = _filterProducts(allProducts);
 
@@ -473,6 +473,57 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
+  // ── BARU: dialog konfirmasi hapus ─────────────────────────────────────────
+  void _confirmDeleteProduct(BuildContext editCtx, Product product) {
+    showDialog(
+      context: editCtx,
+      builder: (confirmCtx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Hapus Produk'),
+          ],
+        ),
+        content: Text(
+          'Yakin ingin menghapus "${product.name}"?\n\nData yang sudah dihapus tidak bisa dikembalikan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(confirmCtx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(confirmCtx); // tutup dialog konfirmasi
+              Navigator.pop(editCtx);   // tutup dialog edit
+
+              await _firestore
+                  .collection('products')
+                  .doc(product.id)
+                  .delete();
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Produk "${product.name}" berhasil dihapus'),
+                    backgroundColor: Colors.red[700],
+                  ),
+                );
+              }
+            },
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+  }
+  // ──────────────────────────────────────────────────────────────────────────
+
   void _showEditProductDialog(BuildContext context, Product product) {
     final nameCtrl = TextEditingController(text: product.name);
     final stockCtrl =
@@ -556,54 +607,85 @@ class _ProductScreenState extends State<ProductScreen> {
                     decoration:
                         const InputDecoration(labelText: 'Harga Jual'),
                     keyboardType: TextInputType.number),
+                const SizedBox(height: 24),
+                // Tombol sejajar horizontal dalam Row
+                Row(
+                  children: [
+                    // Hapus — kiri, lebar sama dengan tombol lain
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => _confirmDeleteProduct(ctx, product),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text('Hapus'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Batal — tengah
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text('Batal'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Update — kanan
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (nameCtrl.text.isEmpty) return;
+                          showDialog(
+                            context: ctx,
+                            barrierDismissible: false,
+                            builder: (_) =>
+                                const Center(child: CircularProgressIndicator()),
+                          );
+                          String? imageUrl = product.imageUrl;
+                          if (selectedImage != null) {
+                            final newUrl = await _uploadToCloudinary(selectedImage!);
+                            if (newUrl != null) {
+                              imageUrl = newUrl;
+                            } else if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Gagal upload gambar, coba lagi'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                          await _firestore
+                              .collection('products')
+                              .doc(product.id)
+                              .update({
+                            'name': nameCtrl.text,
+                            'stock': int.tryParse(stockCtrl.text) ?? 0,
+                            'buyPrice': double.tryParse(buyCtrl.text) ?? 0,
+                            'sellPrice': double.tryParse(sellCtrl.text) ?? 0,
+                            'imageUrl': imageUrl,
+                          });
+                          if (mounted) {
+                            Navigator.pop(ctx);
+                            Navigator.pop(ctx);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text('Update'),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Batal')),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameCtrl.text.isEmpty) return;
-                showDialog(
-                  context: ctx,
-                  barrierDismissible: false,
-                  builder: (_) =>
-                      const Center(child: CircularProgressIndicator()),
-                );
-                String? imageUrl = product.imageUrl;
-                if (selectedImage != null) {
-                  final newUrl = await _uploadToCloudinary(selectedImage!);
-                  if (newUrl != null) {
-                    imageUrl = newUrl;
-                  } else if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Gagal upload gambar, coba lagi'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-                await _firestore
-                    .collection('products')
-                    .doc(product.id)
-                    .update({
-                  'name': nameCtrl.text,
-                  'stock': int.tryParse(stockCtrl.text) ?? 0,
-                  'buyPrice': double.tryParse(buyCtrl.text) ?? 0,
-                  'sellPrice': double.tryParse(sellCtrl.text) ?? 0,
-                  'imageUrl': imageUrl,
-                });
-                if (mounted) {
-                  Navigator.pop(ctx);
-                  Navigator.pop(ctx);
-                }
-              },
-              child: const Text('Update'),
-            ),
-          ],
         ),
       ),
     );
