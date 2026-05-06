@@ -71,6 +71,52 @@ class _GroomingTab extends StatefulWidget {
 class _GroomingTabState extends State<_GroomingTab> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  Future<bool?> _confirmDelete(BuildContext context, String catName) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red[400], size: 24),
+            const SizedBox(width: 8),
+            Text('Hapus Data?',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: RichText(
+          text: TextSpan(
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[700]),
+            children: [
+              const TextSpan(text: 'Data grooming '),
+              TextSpan(
+                text: catName,
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.black),
+              ),
+              const TextSpan(text: ' akan dihapus permanen dan tidak bisa dikembalikan.'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Batal', style: GoogleFonts.poppins(color: Colors.grey[600])),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.delete_forever, size: 18),
+            label: Text('Hapus', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red[500],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,79 +149,129 @@ class _GroomingTabState extends State<_GroomingTab> {
             padding: const EdgeInsets.all(12),
             itemCount: services.length,
             itemBuilder: (context, index) {
+              final docId = services[index].id;
               final data = services[index].data() as Map<String, dynamic>;
               final dateTime = DateTime.parse(data['dateTime']);
               final price = (data['price'] as num).toDouble();
               final modal = (data['modal'] as num? ?? 0).toDouble();
               final laba = price - modal;
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: Colors.orange[50], shape: BoxShape.circle),
-                        child: Icon(Icons.content_cut, color: Colors.orange[700], size: 22),
+              // ✅ Swipe kiri untuk hapus
+              return Dismissible(
+                key: Key(docId),
+                direction: DismissDirection.endToStart,
+                confirmDismiss: (_) => _confirmDelete(context, data['catName'] ?? 'ini'),
+                onDismissed: (_) async {
+                  await _firestore.collection('services').doc(docId).delete();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Data grooming ${data['catName']} dihapus',
+                            style: GoogleFonts.poppins()),
+                        backgroundColor: Colors.red[400],
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    );
+                  }
+                },
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(right: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.red[400],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.delete_forever, color: Colors.white, size: 28),
+                      const SizedBox(height: 4),
+                      Text('Hapus', style: GoogleFonts.poppins(
+                          color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+                child: Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(color: Colors.orange[50], shape: BoxShape.circle),
+                          child: Icon(Icons.content_cut, color: Colors.orange[700], size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(data['catName'],
+                                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
+                              Text(data['serviceType'],
+                                  style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 13)),
+                              Text(
+                                '${dateTime.day}/${dateTime.month}/${dateTime.year}  ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}',
+                                style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[400]),
+                              ),
+                              // ✅ Hint swipe to delete
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(Icons.swipe_left, size: 12, color: Colors.grey[400]),
+                                  const SizedBox(width: 3),
+                                  Text('Geser kiri untuk hapus',
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 10, color: Colors.grey[400])),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text(data['catName'],
-                                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
-                            Text(data['serviceType'],
-                                style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 13)),
-                            Text(
-                              '${dateTime.day}/${dateTime.month}/${dateTime.year}  ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}',
-                              style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[400]),
+                            Text('Rp ${price.toRupiah()}',
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold, color: Colors.green[700], fontSize: 15)),
+                            const SizedBox(height: 2),
+                            Text('Modal: Rp ${modal.toRupiah()}',
+                                style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500])),
+                            Container(
+                              margin: const EdgeInsets.only(top: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: laba >= 0 ? Colors.green[50] : Colors.red[50],
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: laba >= 0 ? Colors.green[200]! : Colors.red[200]!,
+                                ),
+                              ),
+                              child: Text(
+                                'Laba: Rp ${laba.toRupiah()}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: laba >= 0 ? Colors.green[700] : Colors.red[600],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                  color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+                              child: Text(data['paymentMethod'],
+                                  style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600])),
                             ),
                           ],
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text('Rp ${price.toRupiah()}',
-                              style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.bold, color: Colors.green[700], fontSize: 15)),
-                          const SizedBox(height: 2),
-                          Text('Modal: Rp ${modal.toRupiah()}',
-                              style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500])),
-                          Container(
-                            margin: const EdgeInsets.only(top: 2),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: laba >= 0 ? Colors.green[50] : Colors.red[50],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: laba >= 0 ? Colors.green[200]! : Colors.red[200]!,
-                              ),
-                            ),
-                            child: Text(
-                              'Laba: Rp ${laba.toRupiah()}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: laba >= 0 ? Colors.green[700] : Colors.red[600],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                                color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
-                            child: Text(data['paymentMethod'],
-                                style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600])),
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -255,7 +351,6 @@ class _GroomingTabState extends State<_GroomingTab> {
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
-                  // Preview laba real-time
                   if (price > 0 || modal > 0) ...[
                     const SizedBox(height: 12),
                     Container(
@@ -297,7 +392,9 @@ class _GroomingTabState extends State<_GroomingTab> {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  if (catNameCtrl.text.isEmpty || serviceTypeCtrl.text.isEmpty || priceCtrl.text.isEmpty) return;
+                  if (catNameCtrl.text.isEmpty ||
+                      serviceTypeCtrl.text.isEmpty ||
+                      priceCtrl.text.isEmpty) return;
                   await _firestore.collection('services').add({
                     'type': 'grooming',
                     'catName': catNameCtrl.text,
@@ -310,7 +407,8 @@ class _GroomingTabState extends State<_GroomingTab> {
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Grooming berhasil dicatat!'),
+                        const SnackBar(
+                            content: Text('Grooming berhasil dicatat!'),
                             backgroundColor: Colors.green));
                   }
                 },
@@ -328,7 +426,8 @@ class _GroomingTabState extends State<_GroomingTab> {
   Widget _paymentSelector(String selected, Function(String) onChanged) {
     return Container(
       decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(8)),
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(8)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -339,13 +438,17 @@ class _GroomingTabState extends State<_GroomingTab> {
           ),
           RadioListTile<String>(
             title: Text('Cash', style: GoogleFonts.poppins()),
-            value: 'Cash', groupValue: selected,
-            onChanged: (v) => onChanged(v!), dense: true,
+            value: 'Cash',
+            groupValue: selected,
+            onChanged: (v) => onChanged(v!),
+            dense: true,
           ),
           RadioListTile<String>(
             title: Text('QRIS', style: GoogleFonts.poppins()),
-            value: 'QRIS', groupValue: selected,
-            onChanged: (v) => onChanged(v!), dense: true,
+            value: 'QRIS',
+            groupValue: selected,
+            onChanged: (v) => onChanged(v!),
+            dense: true,
           ),
         ],
       ),
@@ -409,15 +512,63 @@ class _PenitipanTabState extends State<_PenitipanTab> {
     }
     String message = '';
     if (status == _CheckoutStatus.today) {
-      message = 'Halo $ownerName, kami dari Maffin Petshop ingin memberitahu bahwa kucing Anda $catName sudah waktunya dijemput. Terima kasih 🐱';
+      message =
+          'Halo $ownerName, kami dari Maffin Petshop ingin memberitahu bahwa kucing Anda $catName sudah waktunya dijemput. Terima kasih 🐱';
     } else if (status == _CheckoutStatus.overdue) {
-      message = 'Halo $ownerName, kami dari Maffin Petshop ingin memberitahu bahwa kucing Anda $catName sudah melewati waktu penjemputan. Mohon segera dijemput. Terima kasih 🐱';
+      message =
+          'Halo $ownerName, kami dari Maffin Petshop ingin memberitahu bahwa kucing Anda $catName sudah melewati waktu penjemputan. Mohon segera dijemput. Terima kasih 🐱';
     }
     final encodedMessage = Uri.encodeComponent(message);
     final url = 'https://wa.me/$formattedPhone?text=$encodedMessage';
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     }
+  }
+
+  Future<bool?> _confirmDeletePenitipan(BuildContext context, String catName) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red[400], size: 24),
+            const SizedBox(width: 8),
+            Text('Hapus Data?',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: RichText(
+          text: TextSpan(
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[700]),
+            children: [
+              const TextSpan(text: 'Data penitipan '),
+              TextSpan(
+                text: catName,
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.black),
+              ),
+              const TextSpan(text: ' akan dihapus permanen dan tidak bisa dikembalikan.'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Batal', style: GoogleFonts.poppins(color: Colors.grey[600])),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.delete_forever, size: 18),
+            label: Text('Hapus', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red[500],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -456,14 +607,15 @@ class _PenitipanTabState extends State<_PenitipanTab> {
               final data = services[index].data() as Map<String, dynamic>;
               final checkIn = DateTime.parse(data['checkIn']);
               final checkOut = DateTime.parse(data['checkOut']);
-              final days = checkOut.difference(checkIn).inDays + 1; // fix: hitung hari masuk
+              final days = checkOut.difference(checkIn).inDays + 1;
               final total = (data['total'] as num).toDouble();
               final dp = (data['dp'] as num? ?? 0).toDouble();
               final isPaid = data['isPaid'] as bool? ?? false;
               final isCompleted = data['isCompleted'] as bool? ?? false;
               final ownerName = data['ownerName'] ?? '';
               final ownerPhone = data['ownerPhone'] ?? '';
-              final notes = (data['notes'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+              final notes =
+                  (data['notes'] as List?)?.cast<Map<String, dynamic>>() ?? [];
               final status = _getCheckoutStatus(checkOut, isCompleted);
               final discount = (data['discount'] as num? ?? 0).toDouble();
 
@@ -471,256 +623,469 @@ class _PenitipanTabState extends State<_PenitipanTab> {
               Color bgColor;
               switch (status) {
                 case _CheckoutStatus.today:
-                  borderColor = Colors.green[400]!; bgColor = Colors.green[50]!; break;
+                  borderColor = Colors.green[400]!;
+                  bgColor = Colors.green[50]!;
+                  break;
                 case _CheckoutStatus.overdue:
-                  borderColor = Colors.red[400]!; bgColor = Colors.red[50]!; break;
+                  borderColor = Colors.red[400]!;
+                  bgColor = Colors.red[50]!;
+                  break;
                 case _CheckoutStatus.completed:
-                  borderColor = Colors.grey[300]!; bgColor = Colors.grey[50]!; break;
+                  borderColor = Colors.grey[300]!;
+                  bgColor = Colors.grey[50]!;
+                  break;
                 default:
-                  borderColor = Colors.grey[200]!; bgColor = Colors.white;
+                  borderColor = Colors.grey[200]!;
+                  bgColor = Colors.white;
               }
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 10),
-                color: bgColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  side: BorderSide(color: borderColor, width: 1.5),
-                ),
-                elevation: isCompleted ? 0 : 2,
-                child: ExpansionTile(
-                  tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  childrenPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(9),
-                    decoration: BoxDecoration(
-                      color: status == _CheckoutStatus.today ? Colors.green[100]
-                          : status == _CheckoutStatus.overdue ? Colors.red[100]
-                          : status == _CheckoutStatus.completed ? Colors.grey[200]
-                          : Colors.orange[50],
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.home,
-                        color: status == _CheckoutStatus.today ? Colors.green[700]
-                            : status == _CheckoutStatus.overdue ? Colors.red[700]
-                            : status == _CheckoutStatus.completed ? Colors.grey[500]
-                            : Colors.orange[700],
-                        size: 22),
-                  ),
-                  title: Row(
-                    children: [
-                      Expanded(
-                        child: Text(data['catName'],
-                            style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color: isCompleted ? Colors.grey[500] : null)),
-                      ),
-                      _buildBadge(status),
-                    ],
-                  ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 6, bottom: 6),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(children: [
-                          Icon(Icons.calendar_today, size: 12, color: Colors.grey[500]),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              '$days hari  •  ${checkIn.day}/${checkIn.month} → ${checkOut.day}/${checkOut.month}/${checkOut.year}',
-                              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
-                            ),
-                          ),
-                        ]),
-                        if (ownerName.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Row(children: [
-                            Icon(Icons.person, size: 12, color: Colors.grey[500]),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(ownerName,
-                                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
-                            ),
-                          ]),
-                        ],
-                        const SizedBox(height: 6),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+              // ✅ Penitipan yang sudah selesai: bisa swipe hapus
+              // Penitipan aktif: hanya bisa hapus jika belum selesai (dengan konfirmasi ekstra)
+              return Dismissible(
+                key: Key(docId),
+                direction: DismissDirection.endToStart,
+                confirmDismiss: (_) async {
+                  // Kalau masih aktif, tampilkan warning extra
+                  if (!isCompleted) {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        title: Row(
                           children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                            Icon(Icons.warning_amber_rounded,
+                                color: Colors.red[600], size: 24),
+                            const SizedBox(width: 8),
+                            Text('Hapus Penitipan Aktif?',
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold, fontSize: 15)),
+                          ],
+                        ),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                style: GoogleFonts.poppins(
+                                    fontSize: 14, color: Colors.grey[700]),
                                 children: [
-                                  Text('Rp ${total.toRupiah()}',
-                                      style: GoogleFonts.poppins(
-                                          fontWeight: FontWeight.bold,
-                                          color: isCompleted ? Colors.grey[500] : Colors.green[700],
-                                          fontSize: 16)),
-                                  if (dp > 0 && !isPaid)
-                                    Text('DP: Rp ${dp.toRupiah()} • Sisa: Rp ${(total - dp).toRupiah()}',
-                                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.orange[700])),
-                                  if (isPaid && dp > 0)
-                                    Text('✅ Lunas',
-                                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.green[700])),
+                                  const TextSpan(text: 'Penitipan '),
+                                  TextSpan(
+                                    text: data['catName'] ?? '',
+                                    style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black),
+                                  ),
+                                  const TextSpan(
+                                      text: ' masih aktif dan belum selesai.'),
                                 ],
                               ),
                             ),
-                            if (ownerPhone.isNotEmpty && !isCompleted)
-                              _buildWAButton(
-                                onTap: () => _openWhatsApp(
-                                  phone: ownerPhone,
-                                  catName: data['catName'],
-                                  ownerName: ownerName,
-                                  status: status,
-                                ),
-                                status: status,
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.red[50],
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.red[200]!),
                               ),
+                              child: Text(
+                                '⚠️ Data akan dihapus permanen termasuk semua catatan dan riwayat pembayaran.',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12, color: Colors.red[700]),
+                              ),
+                            ),
                           ],
                         ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: Text('Batal',
+                                style: GoogleFonts.poppins(
+                                    color: Colors.grey[600])),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            icon: const Icon(Icons.delete_forever, size: 18),
+                            label: Text('Tetap Hapus',
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red[600],
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                    return confirm ?? false;
+                  }
+                  // Kalau sudah selesai, konfirmasi biasa
+                  return _confirmDeletePenitipan(context, data['catName'] ?? 'ini');
+                },
+                onDismissed: (_) async {
+                  await _firestore.collection('services').doc(docId).delete();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            'Data penitipan ${data['catName']} dihapus',
+                            style: GoogleFonts.poppins()),
+                        backgroundColor: Colors.red[400],
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    );
+                  }
+                },
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(right: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.red[400],
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.delete_forever,
+                          color: Colors.white, size: 28),
+                      const SizedBox(height: 4),
+                      Text('Hapus',
+                          style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+                child: Card(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  color: bgColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: BorderSide(color: borderColor, width: 1.5),
+                  ),
+                  elevation: isCompleted ? 0 : 2,
+                  child: ExpansionTile(
+                    tilePadding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    childrenPadding: EdgeInsets.zero,
+                    leading: Container(
+                      padding: const EdgeInsets.all(9),
+                      decoration: BoxDecoration(
+                        color: status == _CheckoutStatus.today
+                            ? Colors.green[100]
+                            : status == _CheckoutStatus.overdue
+                                ? Colors.red[100]
+                                : status == _CheckoutStatus.completed
+                                    ? Colors.grey[200]
+                                    : Colors.orange[50],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.home,
+                          color: status == _CheckoutStatus.today
+                              ? Colors.green[700]
+                              : status == _CheckoutStatus.overdue
+                                  ? Colors.red[700]
+                                  : status == _CheckoutStatus.completed
+                                      ? Colors.grey[500]
+                                      : Colors.orange[700],
+                          size: 22),
+                    ),
+                    title: Row(
+                      children: [
+                        Expanded(
+                          child: Text(data['catName'],
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: isCompleted ? Colors.grey[500] : null)),
+                        ),
+                        _buildBadge(status),
                       ],
                     ),
-                  ),
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey[200]!),
-                      ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 6, bottom: 6),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Detail Penitipan',
-                              style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey[700])),
-                          const SizedBox(height: 8),
-                          _detailRow('Owner', ownerName),
-                          _detailRow('No. WA', ownerPhone),
-                          const Divider(height: 16),
-                          _detailRow('Harga per hari', 'Rp ${(data['pricePerDay'] as num).toRupiah()}'),
-                          _detailRow('Jumlah hari', '$days hari'),
-                          if (discount > 0)
-                            _detailRow('Diskon', '- Rp ${discount.toRupiah()}',
-                                valueColor: Colors.red[600]),
-                          const Divider(height: 16),
-                          _detailRow('Total', 'Rp ${total.toRupiah()}',
-                              isBold: true, valueColor: Colors.green[700]),
-                          if (dp > 0)
-                            _detailRow('DP dibayar', 'Rp ${dp.toRupiah()}',
-                                valueColor: Colors.orange[700]),
-                          if (dp > 0 && !isPaid)
-                            _detailRow('Sisa pembayaran', 'Rp ${(total - dp).toRupiah()}',
-                                isBold: true, valueColor: Colors.red[600]),
-                          if (isPaid && dp > 0)
-                            _detailRow('Status', '✅ Lunas', valueColor: Colors.green[700]),
-
-                          const SizedBox(height: 12),
+                          Row(children: [
+                            Icon(Icons.calendar_today,
+                                size: 12, color: Colors.grey[500]),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                '$days hari  •  ${checkIn.day}/${checkIn.month} → ${checkOut.day}/${checkOut.month}/${checkOut.year}',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12, color: Colors.grey[600]),
+                              ),
+                            ),
+                          ]),
+                          if (ownerName.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Row(children: [
+                              Icon(Icons.person,
+                                  size: 12, color: Colors.grey[500]),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(ownerName,
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 12, color: Colors.grey[600])),
+                              ),
+                            ]),
+                          ],
+                          const SizedBox(height: 2),
+                          // ✅ Hint swipe to delete
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Catatan',
+                              Icon(Icons.swipe_left,
+                                  size: 12, color: Colors.grey[400]),
+                              const SizedBox(width: 3),
+                              Text('Geser kiri untuk hapus',
                                   style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey[700])),
-                              if (!isCompleted)
-                                GestureDetector(
-                                  onTap: () => _showAddNoteDialog(context, docId, data['catName']),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.orange[50],
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: Colors.orange[300]!),
-                                    ),
-                                    child: Row(children: [
-                                      Icon(Icons.add, size: 14, color: Colors.orange[700]),
-                                      const SizedBox(width: 2),
-                                      Text('Tambah', style: GoogleFonts.poppins(
-                                          fontSize: 12, color: Colors.orange[700])),
-                                    ]),
+                                      fontSize: 10, color: Colors.grey[400])),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                        'Rp ${total.toRupiah()}',
+                                        style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.bold,
+                                            color: isCompleted
+                                                ? Colors.grey[500]
+                                                : Colors.green[700],
+                                            fontSize: 16)),
+                                    if (dp > 0 && !isPaid)
+                                      Text(
+                                          'DP: Rp ${dp.toRupiah()} • Sisa: Rp ${(total - dp).toRupiah()}',
+                                          style: GoogleFonts.poppins(
+                                              fontSize: 11,
+                                              color: Colors.orange[700])),
+                                    if (isPaid && dp > 0)
+                                      Text('✅ Lunas',
+                                          style: GoogleFonts.poppins(
+                                              fontSize: 11,
+                                              color: Colors.green[700])),
+                                  ],
+                                ),
+                              ),
+                              if (ownerPhone.isNotEmpty && !isCompleted)
+                                _buildWAButton(
+                                  onTap: () => _openWhatsApp(
+                                    phone: ownerPhone,
+                                    catName: data['catName'],
+                                    ownerName: ownerName,
+                                    status: status,
                                   ),
+                                  status: status,
                                 ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          if (notes.isEmpty)
-                            Text('Belum ada catatan',
-                                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[400]))
-                          else
-                            ...notes.map((note) => Container(
-                              margin: const EdgeInsets.only(bottom: 6),
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: Colors.amber[50],
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.amber[200]!),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('📝 ', style: TextStyle(fontSize: 13)),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(note['text'] ?? '',
-                                            style: GoogleFonts.poppins(fontSize: 13)),
-                                        Text(note['date'] ?? '',
-                                            style: GoogleFonts.poppins(
-                                                fontSize: 11, color: Colors.grey[500])),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )).toList(),
-
-                          if (!isCompleted) ...[
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () => _showExtendDialog(context, docId, data, days, total),
-                                icon: const Icon(Icons.add_circle_outline, size: 18),
-                                label: Text('Perpanjang Penitipan',
-                                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.orange[700],
-                                  side: BorderSide(color: Colors.orange[400]!),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            if (status == _CheckoutStatus.today || status == _CheckoutStatus.overdue)
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  onPressed: () => _showCompleteDialog(
-                                      context, docId, data, total, dp, isPaid),
-                                  icon: const Icon(Icons.check_circle, size: 18),
-                                  label: Text('Selesai & Bayar',
-                                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green[600],
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8)),
-                                  ),
-                                ),
-                              ),
-                          ] else ...[
-                            const SizedBox(height: 8),
-                            Center(child: Text('✅ Penitipan selesai',
-                                style: GoogleFonts.poppins(color: Colors.grey[500], fontSize: 13))),
-                          ],
                         ],
                       ),
                     ),
-                  ],
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Detail Penitipan',
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: Colors.grey[700])),
+                            const SizedBox(height: 8),
+                            _detailRow('Owner', ownerName),
+                            _detailRow('No. WA', ownerPhone),
+                            const Divider(height: 16),
+                            _detailRow('Harga per hari',
+                                'Rp ${(data['pricePerDay'] as num).toRupiah()}'),
+                            _detailRow('Jumlah hari', '$days hari'),
+                            if (discount > 0)
+                              _detailRow('Diskon', '- Rp ${discount.toRupiah()}',
+                                  valueColor: Colors.red[600]),
+                            const Divider(height: 16),
+                            _detailRow('Total', 'Rp ${total.toRupiah()}',
+                                isBold: true, valueColor: Colors.green[700]),
+                            if (dp > 0)
+                              _detailRow('DP dibayar', 'Rp ${dp.toRupiah()}',
+                                  valueColor: Colors.orange[700]),
+                            if (dp > 0 && !isPaid)
+                              _detailRow(
+                                  'Sisa pembayaran',
+                                  'Rp ${(total - dp).toRupiah()}',
+                                  isBold: true,
+                                  valueColor: Colors.red[600]),
+                            if (isPaid && dp > 0)
+                              _detailRow('Status', '✅ Lunas',
+                                  valueColor: Colors.green[700]),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Catatan',
+                                    style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: Colors.grey[700])),
+                                if (!isCompleted)
+                                  GestureDetector(
+                                    onTap: () => _showAddNoteDialog(
+                                        context, docId, data['catName']),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange[50],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                            color: Colors.orange[300]!),
+                                      ),
+                                      child: Row(children: [
+                                        Icon(Icons.add,
+                                            size: 14,
+                                            color: Colors.orange[700]),
+                                        const SizedBox(width: 2),
+                                        Text('Tambah',
+                                            style: GoogleFonts.poppins(
+                                                fontSize: 12,
+                                                color: Colors.orange[700])),
+                                      ]),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            if (notes.isEmpty)
+                              Text('Belum ada catatan',
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 12, color: Colors.grey[400]))
+                            else
+                              ...notes
+                                  .map((note) => Container(
+                                        margin:
+                                            const EdgeInsets.only(bottom: 6),
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: Colors.amber[50],
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                              color: Colors.amber[200]!),
+                                        ),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('📝 ',
+                                                style:
+                                                    TextStyle(fontSize: 13)),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(note['text'] ?? '',
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                              fontSize: 13)),
+                                                  Text(note['date'] ?? '',
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                              fontSize: 11,
+                                                              color: Colors
+                                                                  .grey[500])),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ))
+                                  .toList(),
+                            if (!isCompleted) ...[
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _showExtendDialog(
+                                      context, docId, data, days, total),
+                                  icon: const Icon(
+                                      Icons.add_circle_outline,
+                                      size: 18),
+                                  label: Text('Perpanjang Penitipan',
+                                      style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.w600)),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.orange[700],
+                                    side: BorderSide(
+                                        color: Colors.orange[400]!),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8)),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              if (status == _CheckoutStatus.today ||
+                                  status == _CheckoutStatus.overdue)
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () => _showCompleteDialog(
+                                        context,
+                                        docId,
+                                        data,
+                                        total,
+                                        dp,
+                                        isPaid),
+                                    icon: const Icon(Icons.check_circle,
+                                        size: 18),
+                                    label: Text('Selesai & Bayar',
+                                        style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.bold)),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green[600],
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8)),
+                                    ),
+                                  ),
+                                ),
+                            ] else ...[
+                              const SizedBox(height: 8),
+                              Center(
+                                  child: Text('✅ Penitipan selesai',
+                                      style: GoogleFonts.poppins(
+                                          color: Colors.grey[500],
+                                          fontSize: 13))),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -749,77 +1114,102 @@ class _PenitipanTabState extends State<_PenitipanTab> {
   }
 
   Widget _badge(String text, Color color) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20)),
-    child: Text(text, style: GoogleFonts.poppins(
-        color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-  );
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration:
+            BoxDecoration(color: color, borderRadius: BorderRadius.circular(20)),
+        child: Text(text,
+            style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold)),
+      );
 
-  Widget _buildWAButton({required VoidCallback onTap, required _CheckoutStatus status}) {
-    final isUrgent = status == _CheckoutStatus.today || status == _CheckoutStatus.overdue;
+  Widget _buildWAButton(
+      {required VoidCallback onTap, required _CheckoutStatus status}) {
+    final isUrgent =
+        status == _CheckoutStatus.today || status == _CheckoutStatus.overdue;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: const Color(0xFF25D366),
           borderRadius: BorderRadius.circular(20),
-          boxShadow: isUrgent ? [BoxShadow(
-              color: const Color(0xFF25D366).withOpacity(0.4),
-              blurRadius: 8, offset: const Offset(0, 3))] : null,
+          boxShadow: isUrgent
+              ? [
+                  BoxShadow(
+                      color: const Color(0xFF25D366).withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3))
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.chat, color: Colors.white, size: 14),
             const SizedBox(width: 5),
-            Text('Chat WA', style: GoogleFonts.poppins(
-                color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+            Text('Chat WA',
+                style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold)),
           ],
         ),
       ),
     );
   }
 
-  Widget _detailRow(String label, String value, {bool isBold = false, Color? valueColor}) {
+  Widget _detailRow(String label, String value,
+      {bool isBold = false, Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[600])),
-          Text(value, style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-              color: valueColor)),
+          Text(label,
+              style:
+                  GoogleFonts.poppins(fontSize: 13, color: Colors.grey[600])),
+          Text(value,
+              style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+                  color: valueColor)),
         ],
       ),
     );
   }
 
-  void _showAddNoteDialog(BuildContext context, String docId, String catName) {
+  void _showAddNoteDialog(
+      BuildContext context, String docId, String catName) {
     final noteCtrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('Tambah Catatan - $catName',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
+            style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold, fontSize: 15)),
         content: TextField(
           controller: noteCtrl,
           maxLines: 3,
           decoration: InputDecoration(
-            hintText: 'contoh: Kucing tidak mau makan, sudah dibawa ke dokter Rp 150.000',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            hintText:
+                'contoh: Kucing tidak mau makan, sudah dibawa ke dokter Rp 150.000',
+            border:
+                OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
               child: Text('Batal', style: GoogleFonts.poppins())),
           ElevatedButton(
             onPressed: () async {
               if (noteCtrl.text.isEmpty) return;
               final now = DateTime.now();
-              final dateStr = '${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}';
+              final dateStr =
+                  '${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}';
               await _firestore.collection('services').doc(docId).update({
                 'notes': FieldValue.arrayUnion([
                   {'text': noteCtrl.text, 'date': dateStr}
@@ -828,7 +1218,8 @@ class _PenitipanTabState extends State<_PenitipanTab> {
               if (ctx.mounted) Navigator.pop(ctx);
             },
             style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange[700], foregroundColor: Colors.white),
+                backgroundColor: Colors.orange[700],
+                foregroundColor: Colors.white),
             child: Text('Simpan', style: GoogleFonts.poppins()),
           ),
         ],
@@ -846,18 +1237,22 @@ class _PenitipanTabState extends State<_PenitipanTab> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialog) {
           final addDays = int.tryParse(addDaysCtrl.text) ?? 0;
-          final newCheckOut = currentCheckOut.add(Duration(days: addDays));
+          final newCheckOut =
+              currentCheckOut.add(Duration(days: addDays));
           final additionalCost = _pricePerDay * addDays;
           final newTotal = currentTotal + additionalCost;
 
           return AlertDialog(
             title: Text('Perpanjang Penitipan',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                style:
+                    GoogleFonts.poppins(fontWeight: FontWeight.bold)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Tanggal keluar saat ini: ${currentCheckOut.day}/${currentCheckOut.month}/${currentCheckOut.year}',
-                    style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[600])),
+                Text(
+                    'Tanggal keluar saat ini: ${currentCheckOut.day}/${currentCheckOut.month}/${currentCheckOut.year}',
+                    style: GoogleFonts.poppins(
+                        fontSize: 13, color: Colors.grey[600])),
                 const SizedBox(height: 12),
                 TextField(
                   controller: addDaysCtrl,
@@ -865,8 +1260,10 @@ class _PenitipanTabState extends State<_PenitipanTab> {
                   onChanged: (_) => setDialog(() {}),
                   decoration: InputDecoration(
                     labelText: 'Tambah berapa hari?',
-                    prefixIcon: const Icon(Icons.calendar_today),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    prefixIcon:
+                        const Icon(Icons.calendar_today),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
                 if (addDays > 0) ...[
@@ -876,41 +1273,60 @@ class _PenitipanTabState extends State<_PenitipanTab> {
                     decoration: BoxDecoration(
                       color: Colors.orange[50],
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange[200]!),
+                      border:
+                          Border.all(color: Colors.orange[200]!),
                     ),
                     child: Column(children: [
-                      _detailRow('Tanggal keluar baru',
+                      _detailRow(
+                          'Tanggal keluar baru',
                           '${newCheckOut.day}/${newCheckOut.month}/${newCheckOut.year}'),
-                      _detailRow('Biaya tambahan', 'Rp ${additionalCost.toRupiah()}',
+                      _detailRow(
+                          'Biaya tambahan',
+                          'Rp ${additionalCost.toRupiah()}',
                           valueColor: Colors.orange[700]),
                       const Divider(height: 12),
-                      _detailRow('Total baru', 'Rp ${newTotal.toRupiah()}',
-                          isBold: true, valueColor: Colors.green[700]),
+                      _detailRow('Total baru',
+                          'Rp ${newTotal.toRupiah()}',
+                          isBold: true,
+                          valueColor: Colors.green[700]),
                     ]),
                   ),
                 ],
               ],
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx),
-                  child: Text('Batal', style: GoogleFonts.poppins())),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child:
+                      Text('Batal', style: GoogleFonts.poppins())),
               ElevatedButton(
-                onPressed: addDays > 0 ? () async {
-                  await _firestore.collection('services').doc(docId).update({
-                    'checkOut': newCheckOut.toIso8601String(),
-                    'days': currentDays + addDays,
-                    'total': newTotal,
-                  });
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Penitipan berhasil diperpanjang!'),
-                            backgroundColor: Colors.green));
-                  }
-                } : null,
+                onPressed: addDays > 0
+                    ? () async {
+                        await _firestore
+                            .collection('services')
+                            .doc(docId)
+                            .update({
+                          'checkOut':
+                              newCheckOut.toIso8601String(),
+                          'days': currentDays + addDays,
+                          'total': newTotal,
+                        });
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(
+                                  content: Text(
+                                      'Penitipan berhasil diperpanjang!'),
+                                  backgroundColor:
+                                      Colors.green));
+                        }
+                      }
+                    : null,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange[700], foregroundColor: Colors.white),
-                child: Text('Perpanjang', style: GoogleFonts.poppins()),
+                    backgroundColor: Colors.orange[700],
+                    foregroundColor: Colors.white),
+                child: Text('Perpanjang',
+                    style: GoogleFonts.poppins()),
               ),
             ],
           );
@@ -929,7 +1345,8 @@ class _PenitipanTabState extends State<_PenitipanTab> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialog) => AlertDialog(
           title: Text('Selesai & Bayar',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+              style:
+                  GoogleFonts.poppins(fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -938,17 +1355,24 @@ class _PenitipanTabState extends State<_PenitipanTab> {
                 decoration: BoxDecoration(
                   color: Colors.green[50],
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green[200]!),
+                  border:
+                      Border.all(color: Colors.green[200]!),
                 ),
                 child: Column(children: [
-                  _detailRow('Total', 'Rp ${total.toRupiah()}'),
-                  if (dp > 0) _detailRow('DP sudah dibayar', 'Rp ${dp.toRupiah()}',
-                      valueColor: Colors.orange[700]),
+                  _detailRow(
+                      'Total', 'Rp ${total.toRupiah()}'),
+                  if (dp > 0)
+                    _detailRow('DP sudah dibayar',
+                        'Rp ${dp.toRupiah()}',
+                        valueColor: Colors.orange[700]),
                   const Divider(height: 12),
                   _detailRow(
-                    dp > 0 ? 'Sisa yang harus dibayar' : 'Total pembayaran',
+                    dp > 0
+                        ? 'Sisa yang harus dibayar'
+                        : 'Total pembayaran',
                     'Rp ${sisa.toRupiah()}',
-                    isBold: true, valueColor: Colors.green[700],
+                    isBold: true,
+                    valueColor: Colors.green[700],
                   ),
                 ]),
               ),
@@ -960,42 +1384,66 @@ class _PenitipanTabState extends State<_PenitipanTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(padding: const EdgeInsets.only(left: 12, top: 8),
+                    Padding(
+                        padding: const EdgeInsets.only(
+                            left: 12, top: 8),
                         child: Text('Metode Pembayaran',
-                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]))),
-                    RadioListTile<String>(title: Text('Cash', style: GoogleFonts.poppins()),
-                        value: 'Cash', groupValue: selectedPayment,
-                        onChanged: (v) => setDialog(() => selectedPayment = v!), dense: true),
-                    RadioListTile<String>(title: Text('QRIS', style: GoogleFonts.poppins()),
-                        value: 'QRIS', groupValue: selectedPayment,
-                        onChanged: (v) => setDialog(() => selectedPayment = v!), dense: true),
+                            style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: Colors.grey[600]))),
+                    RadioListTile<String>(
+                        title:
+                            Text('Cash', style: GoogleFonts.poppins()),
+                        value: 'Cash',
+                        groupValue: selectedPayment,
+                        onChanged: (v) =>
+                            setDialog(() => selectedPayment = v!),
+                        dense: true),
+                    RadioListTile<String>(
+                        title:
+                            Text('QRIS', style: GoogleFonts.poppins()),
+                        value: 'QRIS',
+                        groupValue: selectedPayment,
+                        onChanged: (v) =>
+                            setDialog(() => selectedPayment = v!),
+                        dense: true),
                   ],
                 ),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx),
-                child: Text('Batal', style: GoogleFonts.poppins())),
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child:
+                    Text('Batal', style: GoogleFonts.poppins())),
             ElevatedButton(
               onPressed: () async {
-                await _firestore.collection('services').doc(docId).update({
+                await _firestore
+                    .collection('services')
+                    .doc(docId)
+                    .update({
                   'isCompleted': true,
                   'isPaid': true,
                   'finalPaymentMethod': selectedPayment,
-                  'completedAt': DateTime.now().toIso8601String(),
+                  'completedAt':
+                      DateTime.now().toIso8601String(),
                 });
                 if (ctx.mounted) Navigator.pop(ctx);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Penitipan selesai! Terima kasih 🐱'),
+                      const SnackBar(
+                          content:
+                              Text('Penitipan selesai! Terima kasih 🐱'),
                           backgroundColor: Colors.green));
                 }
               },
               style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[600], foregroundColor: Colors.white),
+                  backgroundColor: Colors.green[600],
+                  foregroundColor: Colors.white),
               child: Text('Konfirmasi Selesai',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -1018,14 +1466,15 @@ class _PenitipanTabState extends State<_PenitipanTab> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (ctx, setDialog) {
-          final days = checkOut.difference(checkIn).inDays + 1; // fix: hitung hari masuk
+          final days = checkOut.difference(checkIn).inDays + 1;
           final discount = double.tryParse(discountCtrl.text) ?? 0;
           final dp = double.tryParse(dpCtrl.text) ?? 0;
           final total = (_pricePerDay * days) - discount;
 
           return AlertDialog(
             title: Text('Tambah Penitipan',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                style:
+                    GoogleFonts.poppins(fontWeight: FontWeight.bold)),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1038,86 +1487,124 @@ class _PenitipanTabState extends State<_PenitipanTab> {
                       border: Border.all(color: Colors.orange[200]!),
                     ),
                     child: Row(children: [
-                      Icon(Icons.info_outline, size: 16, color: Colors.orange[700]),
+                      Icon(Icons.info_outline,
+                          size: 16, color: Colors.orange[700]),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _priceLoaded
                               ? 'Harga penitipan: Rp ${_pricePerDay.toRupiah()}/hari (sudah include makanan)'
                               : 'Memuat harga...',
-                          style: GoogleFonts.poppins(fontSize: 12, color: Colors.orange[700]),
+                          style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.orange[700]),
                         ),
                       ),
                     ]),
                   ),
                   const SizedBox(height: 12),
-                  TextField(controller: catNameCtrl,
-                      decoration: InputDecoration(labelText: 'Nama Kucing',
+                  TextField(
+                      controller: catNameCtrl,
+                      decoration: InputDecoration(
+                          labelText: 'Nama Kucing',
                           prefixIcon: const Icon(Icons.pets),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)))),
+                          border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(8)))),
                   const SizedBox(height: 12),
-                  TextField(controller: ownerNameCtrl,
-                      decoration: InputDecoration(labelText: 'Nama Owner',
+                  TextField(
+                      controller: ownerNameCtrl,
+                      decoration: InputDecoration(
+                          labelText: 'Nama Owner',
                           prefixIcon: const Icon(Icons.person),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)))),
+                          border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(8)))),
                   const SizedBox(height: 12),
-                  TextField(controller: ownerPhoneCtrl, keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(labelText: 'No. WA Owner',
+                  TextField(
+                      controller: ownerPhoneCtrl,
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                          labelText: 'No. WA Owner',
                           hintText: 'contoh: 08123456789',
                           prefixIcon: const Icon(Icons.phone),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)))),
+                          border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(8)))),
                   const SizedBox(height: 12),
                   InkWell(
                     onTap: () async {
-                      final picked = await showDatePicker(context: ctx,
-                          initialDate: checkIn, firstDate: DateTime(2020), lastDate: DateTime(2030));
+                      final picked = await showDatePicker(
+                          context: ctx,
+                          initialDate: checkIn,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2030));
                       if (picked != null) {
                         setDialog(() {
                           checkIn = picked;
                           if (checkOut.isBefore(checkIn)) {
-                            checkOut = checkIn.add(const Duration(days: 1));
+                            checkOut = checkIn
+                                .add(const Duration(days: 1));
                           }
                         });
                       }
                     },
-                    child: _dateField('Tanggal Masuk', checkIn, Icons.login),
+                    child: _dateField(
+                        'Tanggal Masuk', checkIn, Icons.login),
                   ),
                   const SizedBox(height: 8),
                   InkWell(
                     onTap: () async {
-                      final picked = await showDatePicker(context: ctx,
+                      final picked = await showDatePicker(
+                          context: ctx,
                           initialDate: checkOut,
-                          firstDate: checkIn.add(const Duration(days: 1)),
+                          firstDate:
+                              checkIn.add(const Duration(days: 1)),
                           lastDate: DateTime(2030));
-                      if (picked != null) setDialog(() => checkOut = picked);
+                      if (picked != null)
+                        setDialog(() => checkOut = picked);
                     },
-                    child: _dateFieldWithBadge('Tanggal Keluar', checkOut, Icons.logout, '$days hari'),
+                    child: _dateFieldWithBadge('Tanggal Keluar',
+                        checkOut, Icons.logout, '$days hari'),
                   ),
                   const SizedBox(height: 12),
-                  TextField(controller: discountCtrl, keyboardType: TextInputType.number,
+                  TextField(
+                      controller: discountCtrl,
+                      keyboardType: TextInputType.number,
                       onChanged: (_) => setDialog(() {}),
-                      decoration: InputDecoration(labelText: 'Diskon (opsional)',
+                      decoration: InputDecoration(
+                          labelText: 'Diskon (opsional)',
                           prefixText: 'Rp ',
                           prefixIcon: const Icon(Icons.discount),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)))),
+                          border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(8)))),
                   const SizedBox(height: 12),
                   Container(
                     decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
+                        border:
+                            Border.all(color: Colors.grey[300]!),
                         borderRadius: BorderRadius.circular(8)),
                     child: Column(children: [
                       SwitchListTile(
-                        title: Text('Bayar DP dulu', style: GoogleFonts.poppins(fontSize: 14)),
-                        subtitle: Text('Sisa dibayar saat penjemputan',
-                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[500])),
+                        title: Text('Bayar DP dulu',
+                            style: GoogleFonts.poppins(
+                                fontSize: 14)),
+                        subtitle: Text(
+                            'Sisa dibayar saat penjemputan',
+                            style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: Colors.grey[500])),
                         value: withDP,
                         activeColor: Colors.orange[700],
-                        onChanged: (v) => setDialog(() => withDP = v),
+                        onChanged: (v) =>
+                            setDialog(() => withDP = v),
                         dense: true,
                       ),
                       if (withDP)
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                          padding:
+                              const EdgeInsets.fromLTRB(12, 0, 12, 12),
                           child: TextField(
                             controller: dpCtrl,
                             keyboardType: TextInputType.number,
@@ -1125,8 +1612,11 @@ class _PenitipanTabState extends State<_PenitipanTab> {
                             decoration: InputDecoration(
                               labelText: 'Nominal DP',
                               prefixText: 'Rp ',
-                              prefixIcon: const Icon(Icons.payments),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              prefixIcon:
+                                  const Icon(Icons.payments),
+                              border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(8)),
                             ),
                           ),
                         ),
@@ -1135,20 +1625,38 @@ class _PenitipanTabState extends State<_PenitipanTab> {
                   const SizedBox(height: 12),
                   Container(
                     decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
+                        border:
+                            Border.all(color: Colors.grey[300]!),
                         borderRadius: BorderRadius.circular(8)),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(padding: const EdgeInsets.only(left: 12, top: 8),
-                            child: Text(withDP ? 'Metode Pembayaran DP' : 'Metode Pembayaran',
-                                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]))),
-                        RadioListTile<String>(title: Text('Cash', style: GoogleFonts.poppins()),
-                            value: 'Cash', groupValue: selectedPayment,
-                            onChanged: (v) => setDialog(() => selectedPayment = v!), dense: true),
-                        RadioListTile<String>(title: Text('QRIS', style: GoogleFonts.poppins()),
-                            value: 'QRIS', groupValue: selectedPayment,
-                            onChanged: (v) => setDialog(() => selectedPayment = v!), dense: true),
+                        Padding(
+                            padding: const EdgeInsets.only(
+                                left: 12, top: 8),
+                            child: Text(
+                                withDP
+                                    ? 'Metode Pembayaran DP'
+                                    : 'Metode Pembayaran',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: Colors.grey[600]))),
+                        RadioListTile<String>(
+                            title: Text('Cash',
+                                style: GoogleFonts.poppins()),
+                            value: 'Cash',
+                            groupValue: selectedPayment,
+                            onChanged: (v) => setDialog(
+                                () => selectedPayment = v!),
+                            dense: true),
+                        RadioListTile<String>(
+                            title: Text('QRIS',
+                                style: GoogleFonts.poppins()),
+                            value: 'QRIS',
+                            groupValue: selectedPayment,
+                            onChanged: (v) => setDialog(
+                                () => selectedPayment = v!),
+                            dense: true),
                       ],
                     ),
                   ),
@@ -1159,23 +1667,31 @@ class _PenitipanTabState extends State<_PenitipanTab> {
                     decoration: BoxDecoration(
                       color: Colors.orange[50],
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange[200]!),
+                      border:
+                          Border.all(color: Colors.orange[200]!),
                     ),
                     child: Column(children: [
-                      Text('Ringkasan', style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold, color: Colors.orange[700])),
+                      Text('Ringkasan',
+                          style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange[700])),
                       const SizedBox(height: 8),
-                      _detailRow('$days hari × Rp ${_pricePerDay.toRupiah()}',
+                      _detailRow(
+                          '$days hari × Rp ${_pricePerDay.toRupiah()}',
                           'Rp ${(_pricePerDay * days).toRupiah()}'),
                       if (discount > 0)
-                        _detailRow('Diskon', '- Rp ${discount.toRupiah()}',
+                        _detailRow('Diskon',
+                            '- Rp ${discount.toRupiah()}',
                             valueColor: Colors.red[600]),
                       const Divider(),
                       _detailRow('Total', 'Rp ${total.toRupiah()}',
-                          isBold: true, valueColor: Colors.green[700]),
+                          isBold: true,
+                          valueColor: Colors.green[700]),
                       if (withDP && dp > 0) ...[
-                        _detailRow('DP', 'Rp ${dp.toRupiah()}', valueColor: Colors.orange[700]),
-                        _detailRow('Sisa', 'Rp ${(total - dp).toRupiah()}',
+                        _detailRow('DP', 'Rp ${dp.toRupiah()}',
+                            valueColor: Colors.orange[700]),
+                        _detailRow('Sisa',
+                            'Rp ${(total - dp).toRupiah()}',
                             valueColor: Colors.red[600]),
                       ],
                     ]),
@@ -1184,11 +1700,14 @@ class _PenitipanTabState extends State<_PenitipanTab> {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx),
-                  child: Text('Batal', style: GoogleFonts.poppins())),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child:
+                      Text('Batal', style: GoogleFonts.poppins())),
               ElevatedButton(
                 onPressed: () async {
-                  if (catNameCtrl.text.isEmpty || !_priceLoaded) return;
+                  if (catNameCtrl.text.isEmpty ||
+                      !_priceLoaded) return;
                   await _firestore.collection('services').add({
                     'type': 'penitipan',
                     'catName': catNameCtrl.text,
@@ -1210,12 +1729,15 @@ class _PenitipanTabState extends State<_PenitipanTab> {
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Penitipan berhasil dicatat!'),
+                        const SnackBar(
+                            content:
+                                Text('Penitipan berhasil dicatat!'),
                             backgroundColor: Colors.green));
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange[700], foregroundColor: Colors.white),
+                    backgroundColor: Colors.orange[700],
+                    foregroundColor: Colors.white),
                 child: Text('Simpan', style: GoogleFonts.poppins()),
               ),
             ],
@@ -1235,15 +1757,19 @@ class _PenitipanTabState extends State<_PenitipanTab> {
         Icon(icon, color: Colors.orange[700], size: 20),
         const SizedBox(width: 8),
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600])),
+          Text(label,
+              style: GoogleFonts.poppins(
+                  fontSize: 11, color: Colors.grey[600])),
           Text('${date.day}/${date.month}/${date.year}',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              style:
+                  GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         ]),
       ]),
     );
   }
 
-  Widget _dateFieldWithBadge(String label, DateTime date, IconData icon, String badge) {
+  Widget _dateFieldWithBadge(
+      String label, DateTime date, IconData icon, String badge) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -1253,17 +1779,25 @@ class _PenitipanTabState extends State<_PenitipanTab> {
         Icon(icon, color: Colors.orange[700], size: 20),
         const SizedBox(width: 8),
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600])),
+          Text(label,
+              style: GoogleFonts.poppins(
+                  fontSize: 11, color: Colors.grey[600])),
           Text('${date.day}/${date.month}/${date.year}',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              style:
+                  GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         ]),
         const Spacer(),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-              color: Colors.orange[100], borderRadius: BorderRadius.circular(8)),
-          child: Text(badge, style: GoogleFonts.poppins(
-              color: Colors.orange[800], fontWeight: FontWeight.bold, fontSize: 13)),
+              color: Colors.orange[100],
+              borderRadius: BorderRadius.circular(8)),
+          child: Text(badge,
+              style: GoogleFonts.poppins(
+                  color: Colors.orange[800],
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13)),
         ),
       ]),
     );

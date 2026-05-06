@@ -614,6 +614,21 @@ class _ReportScreenState extends State<ReportScreen> {
                 style: GoogleFonts.poppins(
                     fontWeight: FontWeight.bold, color: Colors.green[600]),
               ),
+              // ✅ Tampilkan laba grooming di kartu laporan juga
+              if (isGrooming) ...[
+                Builder(builder: (_) {
+                  final price = _safeToDouble(data['price']);
+                  final modal = _safeToDouble(data['modal']);
+                  final laba = price - modal;
+                  return Text(
+                    'Laba: Rp ${_formatCurrency(laba)}',
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        color: laba >= 0 ? Colors.orange[700] : Colors.red[600],
+                        fontSize: 12),
+                  );
+                }),
+              ],
             ],
           ),
           trailing: Container(
@@ -642,18 +657,29 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildGroomingDetail(Map<String, dynamic> data) {
+    final price = _safeToDouble(data['price']);
+    final modal = _safeToDouble(data['modal']);
+    final laba = price - modal;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _detailRow('Jenis Grooming', data['serviceType'] ?? '-'),
+        _detailRow('Modal', 'Rp ${_formatCurrency(modal)}',
+            valueColor: Colors.red[600]),
+        _detailRow('Harga Jual', 'Rp ${_formatCurrency(price)}',
+            valueColor: Colors.green[700]),
+        const Divider(height: 16),
         _detailRow(
-            'Total', 'Rp ${_formatCurrency(_safeToDouble(data['price']))}',
-            isBold: true, valueColor: Colors.green[700]),
+          'Laba Bersih',
+          'Rp ${_formatCurrency(laba)}',
+          isBold: true,
+          valueColor: laba >= 0 ? Colors.orange[700] : Colors.red[600],
+        ),
       ],
     );
   }
 
-  // ✅ FIXED: hapus bringFood & foodPricePerDay yang sudah tidak ada di Firestore
   Widget _buildPenitipanDetail(Map<String, dynamic> data) {
     final days = (data['days'] as num?)?.toInt() ?? 0;
     final discount = (data['discount'] as num? ?? 0).toDouble();
@@ -796,13 +822,26 @@ class _ReportScreenState extends State<ReportScreen> {
           .get();
 
       totalOrders += servicesSnap.docs.length;
+
       for (var doc in servicesSnap.docs) {
         final data = doc.data();
-        final revenue = data['type'] == 'grooming'
-            ? _safeToDouble(data['price'])
-            : _safeToDouble(data['total']);
+
+        final double revenue;
+        final double cost;
+
+        if (data['type'] == 'grooming') {
+          // ✅ FIX: Grooming laba = price - modal (bukan price penuh)
+          revenue = _safeToDouble(data['price']);
+          cost = _safeToDouble(data['modal']);
+        } else {
+          // Penitipan: pure profit, tidak ada COGS terpisah
+          revenue = _safeToDouble(data['total']);
+          cost = 0;
+        }
+
         omset += revenue;
-        netProfit += revenue;
+        totalCost += cost;
+        netProfit += revenue - cost; // ✅ Dikurangi modal dulu
         totalItems += 1;
       }
     }
