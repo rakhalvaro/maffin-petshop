@@ -22,9 +22,7 @@ class _ReportScreenState extends State<ReportScreen> {
             SliverToBoxAdapter(child: _buildPeriodSelector()),
             SliverToBoxAdapter(child: _buildFilterSelector()),
             SliverToBoxAdapter(child: _buildFinancialSummary()),
-            SliverToBoxAdapter(
-              child: Divider(thickness: 1, color: Colors.grey[300]),
-            ),
+            SliverToBoxAdapter(child: Divider(thickness: 1, color: Colors.grey[300])),
             _buildOrdersSliver(),
           ],
         ),
@@ -88,10 +86,7 @@ class _ReportScreenState extends State<ReportScreen> {
               Text(
                 'Periode Laporan:',
                 style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orange[700],
-                ),
+                    fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange[700]),
               ),
               const Spacer(),
               DropdownButton<String>(
@@ -102,9 +97,7 @@ class _ReportScreenState extends State<ReportScreen> {
                     child: Text(value, style: GoogleFonts.poppins()),
                   );
                 }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() => _selectedPeriod = newValue!);
-                },
+                onChanged: (String? newValue) => setState(() => _selectedPeriod = newValue!),
               ),
             ],
           ),
@@ -123,13 +116,8 @@ class _ReportScreenState extends State<ReportScreen> {
                 children: [
                   Icon(Icons.calendar_today, size: 20, color: Colors.orange[700]),
                   const SizedBox(width: 8),
-                  Text(
-                    _getDateText(),
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  Text(_getDateText(),
+                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
@@ -149,11 +137,10 @@ class _ReportScreenState extends State<ReportScreen> {
             child: Center(child: CircularProgressIndicator()),
           );
         }
-        if (snapshot.hasError || !snapshot.hasData) {
-          return const SizedBox();
-        }
+        if (snapshot.hasError || !snapshot.hasData) return const SizedBox();
 
         final data = snapshot.data!;
+        final hasDiscount = (data['totalDiscount'] as double) > 0;
 
         return Container(
           padding: const EdgeInsets.all(16),
@@ -164,20 +151,14 @@ class _ReportScreenState extends State<ReportScreen> {
                 children: [
                   Expanded(
                     child: _buildSummaryCard(
-                      'Total Transaksi',
-                      '${data['totalOrders']}',
-                      Icons.receipt_long,
-                      Colors.orange,
-                    ),
+                        'Total Transaksi', '${data['totalOrders']}',
+                        Icons.receipt_long, Colors.orange),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildSummaryCard(
-                      'Total Item',
-                      '${data['totalItems']}',
-                      Icons.inventory,
-                      Colors.amber,
-                    ),
+                        'Total Item', '${data['totalItems']}',
+                        Icons.inventory, Colors.amber),
                   ),
                 ],
               ),
@@ -186,24 +167,59 @@ class _ReportScreenState extends State<ReportScreen> {
                 children: [
                   Expanded(
                     child: _buildSummaryCard(
-                      'Total Modal',
-                      'Rp ${_formatCurrency(data['totalCost'])}',
-                      Icons.money_off,
-                      Colors.red,
-                    ),
+                        'Total Modal',
+                        'Rp ${_formatCurrency(data['totalCost'])}',
+                        Icons.money_off, Colors.red),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildSummaryCard(
-                      'Omset',
-                      'Rp ${_formatCurrency(data['omset'])}',
-                      Icons.trending_up,
-                      Colors.green,
-                    ),
+                        'Omset',
+                        'Rp ${_formatCurrency(data['omset'])}',
+                        Icons.trending_up, Colors.green),
                   ),
                 ],
               ),
+
+              // ── Baris diskon — hanya tampil kalau ada diskon ──
+              if (hasDiscount) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.red[200]!),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.discount_outlined, color: Colors.red[600], size: 18),
+                          const SizedBox(width: 8),
+                          Text('Total Diskon Diberikan',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.red[700])),
+                        ],
+                      ),
+                      Text(
+                        '- Rp ${_formatCurrency(data['totalDiscount'])}',
+                        style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red[700]),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 12),
+              // ── Laba bersih ───────────────────────────────────
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -225,34 +241,28 @@ class _ReportScreenState extends State<ReportScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.account_balance_wallet,
-                        color: Colors.white, size: 28),
+                    const Icon(Icons.account_balance_wallet, color: Colors.white, size: 28),
                     const SizedBox(height: 6),
-                    Text(
-                      'Laba Bersih',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    Text('Laba Bersih',
+                        style: GoogleFonts.poppins(
+                            fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 2),
                     Text(
                       'Rp ${_formatCurrency(data['netProfit'])}',
                       style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                          fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                     const SizedBox(height: 6),
+                    // ── Info diskon di laba bersih ────────────────
+                    if (hasDiscount)
+                      Text(
+                        '(sudah termasuk diskon Rp ${_formatCurrency(data['totalDiscount'])})',
+                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.white60),
+                      ),
                     Text(
                       'Margin: ${_calculateMarginPercentage(data['omset'], data['netProfit'])}%',
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w400,
-                      ),
+                          fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w400),
                     ),
                   ],
                 ),
@@ -264,8 +274,7 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  Widget _buildSummaryCard(
-      String title, String value, IconData icon, Color color) {
+  Widget _buildSummaryCard(String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -278,38 +287,24 @@ class _ReportScreenState extends State<ReportScreen> {
         children: [
           Icon(icon, color: color, size: 32),
           const SizedBox(height: 8),
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
+          Text(title,
+              style: GoogleFonts.poppins(
+                  fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-            textAlign: TextAlign.center,
-          ),
+          Text(value,
+              style: GoogleFonts.poppins(
+                  fontSize: 16, fontWeight: FontWeight.bold, color: color),
+              textAlign: TextAlign.center),
         ],
       ),
     );
   }
 
   Widget _buildOrdersSliver() {
-    if (_selectedFilter == 'Produk') {
-      return _buildProductOrdersSliver();
-    } else if (_selectedFilter == 'Service') {
-      return _buildServiceOrdersSliver();
-    } else {
-      return _buildAllOrdersSliver();
-    }
+    if (_selectedFilter == 'Produk') return _buildProductOrdersSliver();
+    if (_selectedFilter == 'Service') return _buildServiceOrdersSliver();
+    return _buildAllOrdersSliver();
   }
 
   Widget _buildProductOrdersSliver() {
@@ -317,13 +312,10 @@ class _ReportScreenState extends State<ReportScreen> {
       stream: _getFilteredOrdersStream(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const SliverToBoxAdapter(
-              child: Center(child: CircularProgressIndicator()));
+          return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
         }
         final orders = snapshot.data!.docs;
-        if (orders.isEmpty) {
-          return SliverToBoxAdapter(child: _emptyState('produk'));
-        }
+        if (orders.isEmpty) return SliverToBoxAdapter(child: _emptyState('produk'));
         return SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) => _buildProductOrderCard(orders[index]),
@@ -339,13 +331,10 @@ class _ReportScreenState extends State<ReportScreen> {
       stream: _getFilteredServicesStream(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const SliverToBoxAdapter(
-              child: Center(child: CircularProgressIndicator()));
+          return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
         }
         final services = snapshot.data!.docs;
-        if (services.isEmpty) {
-          return SliverToBoxAdapter(child: _emptyState('service'));
-        }
+        if (services.isEmpty) return SliverToBoxAdapter(child: _emptyState('service'));
         return SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) => _buildServiceCard(services[index]),
@@ -363,50 +352,32 @@ class _ReportScreenState extends State<ReportScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              '🛒 Penjualan Produk',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: Colors.orange[700],
-              ),
-            ),
+            child: Text('🛒 Penjualan Produk',
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold, fontSize: 15, color: Colors.orange[700])),
           ),
           StreamBuilder<QuerySnapshot>(
             stream: _getFilteredOrdersStream(),
             builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
+              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
               final orders = snapshot.data!.docs;
               if (orders.isEmpty) return _emptyState('produk');
-              return Column(
-                children: orders.map((doc) => _buildProductOrderCard(doc)).toList(),
-              );
+              return Column(children: orders.map((doc) => _buildProductOrderCard(doc)).toList());
             },
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              '✂️ Jasa Service',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: Colors.orange[700],
-              ),
-            ),
+            child: Text('✂️ Jasa Service',
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold, fontSize: 15, color: Colors.orange[700])),
           ),
           StreamBuilder<QuerySnapshot>(
             stream: _getFilteredServicesStream(),
             builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
+              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
               final services = snapshot.data!.docs;
               if (services.isEmpty) return _emptyState('service');
-              return Column(
-                children: services.map((doc) => _buildServiceCard(doc)).toList(),
-              );
+              return Column(children: services.map((doc) => _buildServiceCard(doc)).toList());
             },
           ),
           const SizedBox(height: 16),
@@ -416,7 +387,7 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _emptyState(String type) {
-    return Container(
+    return SizedBox(
       height: 120,
       child: Center(
         child: Text(
@@ -432,134 +403,179 @@ class _ReportScreenState extends State<ReportScreen> {
     final orderData = doc.data() as Map<String, dynamic>;
     final dateTime = DateTime.parse(orderData['dateTime']);
     final items = (orderData['items'] as List?) ?? [];
-    double orderProfit = _calculateOrderProfit(items);
+
+    final subtotal = _safeToDouble(orderData['subtotal']);
+    final discount = _safeToDouble(orderData['discount']);
+    final total = _safeToDouble(orderData['total']);
+    final hasDiscount = discount > 0;
+
+    double orderProfit = _calculateOrderProfit(items) - discount;
     double orderCost = _calculateOrderCost(items);
+    final totalQty = items.fold<int>(0, (sum, item) => sum + (item['quantity'] as int));
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          title: Text(
-            'Pesanan ${dateTime.day}/${dateTime.month}/${dateTime.year}',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          // ── Header ringkas: hanya info penting ──────────────
+          title: Row(
             children: [
-              Text(
-                  'Waktu: ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}',
-                  style: GoogleFonts.poppins()),
-              Text('Pembayaran: ${orderData['paymentMethod']}',
-                  style: GoogleFonts.poppins()),
-              const SizedBox(height: 4),
-              Text(
-                'Modal: Rp ${_formatCurrency(orderCost)}',
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold, color: Colors.red[600]),
-              ),
-              Text(
-                'Omset: Rp ${_formatCurrency(_safeToDouble(orderData['total']))}',
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold, color: Colors.green[600]),
-              ),
-              Text(
-                'Laba: Rp ${_formatCurrency(orderProfit)}',
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold, color: Colors.orange[700]),
+              Expanded(
+                child: Text(
+                  '${dateTime.day}/${dateTime.month}/${dateTime.year}  ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
               ),
             ],
           ),
-          trailing: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.orange[700],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '${items.fold<int>(0, (sum, item) => sum + (item['quantity'] as int))} pcs',
-              style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(
+              children: [
+                // Omset
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Rp ${_formatCurrency(total)}',
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green[700],
+                            fontSize: 13),
+                      ),
+                      // Badge diskon kecil jika ada
+                      if (hasDiscount)
+                        Container(
+                          margin: const EdgeInsets.only(top: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: Colors.red[50],
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.red[200]!),
+                          ),
+                          child: Text(
+                            'Diskon Rp ${_formatCurrency(discount)}',
+                            style: GoogleFonts.poppins(
+                                fontSize: 10, color: Colors.red[600]),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                // Laba
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Laba ${_formatCurrency(orderProfit)}',
+                      style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange[700],
+                          fontSize: 12),
+                    ),
+                    Text(
+                      '${orderData['paymentMethod']}  •  $totalQty pcs',
+                      style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
+          // ── Detail saat di-expand ────────────────────────────
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Detail Item:',
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold, fontSize: 16)),
+                  // Ringkasan order (1 baris per info)
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: Column(
+                      children: [
+                        _detailRowReport('Modal', 'Rp ${_formatCurrency(orderCost)}',
+                            valueColor: Colors.red[600]),
+                        if (hasDiscount) ...[
+                          _detailRowReport('Subtotal', 'Rp ${_formatCurrency(subtotal)}'),
+                          _detailRowReport('Diskon', '- Rp ${_formatCurrency(discount)}',
+                              valueColor: Colors.red[400]),
+                        ],
+                        _detailRowReport('Omset', 'Rp ${_formatCurrency(total)}',
+                            valueColor: Colors.green[700]),
+                        _detailRowReport('Laba', 'Rp ${_formatCurrency(orderProfit)}',
+                            valueColor: Colors.orange[700], isBold: true),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 12),
+                  Text('Detail Item:',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14)),
+                  const SizedBox(height: 8),
                   ...items.map<Widget>((item) {
                     double buyPrice = _safeToDouble(item['buyPrice']);
                     double sellPrice = _safeToDouble(item['price']);
                     int quantity = item['quantity'] as int;
                     double itemProfit = (sellPrice - buyPrice) * quantity;
-                    double itemCost = buyPrice * quantity;
-                    double itemRevenue = sellPrice * quantity;
 
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: Colors.grey[50],
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.grey[200]!),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(item['productName'],
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item['productName'],
                                     style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15)),
-                              ),
+                                        fontWeight: FontWeight.w600, fontSize: 13),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Beli Rp ${_formatCurrency(buyPrice)}  •  Jual Rp ${_formatCurrency(sellPrice)}',
+                                  style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600]),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
                               Text('${quantity}x',
                                   style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.bold, fontSize: 16)),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text('Harga Beli: Rp ${_formatCurrency(buyPrice)}',
-                              style: GoogleFonts.poppins(
-                                  color: Colors.red[600], fontSize: 13)),
-                          Text('Harga Jual: Rp ${_formatCurrency(sellPrice)}',
-                              style: GoogleFonts.poppins(
-                                  color: Colors.green[600], fontSize: 13)),
-                          Text('Modal: Rp ${_formatCurrency(itemCost)}',
-                              style: GoogleFonts.poppins(
-                                  color: Colors.red[600], fontSize: 13)),
-                          Text('Omset: Rp ${_formatCurrency(itemRevenue)}',
-                              style: GoogleFonts.poppins(
-                                  color: Colors.green[600], fontSize: 13)),
-                          const SizedBox(height: 8),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: itemProfit > 0
-                                  ? Colors.green[100]
-                                  : Colors.red[100],
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              'Laba: Rp ${_formatCurrency(itemProfit)} (${_calculateItemMargin(sellPrice, buyPrice)}%)',
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                color: itemProfit > 0
-                                    ? Colors.green[700]
-                                    : Colors.red[700],
-                                fontSize: 14,
+                                      fontWeight: FontWeight.bold, fontSize: 13)),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: itemProfit > 0 ? Colors.green[100] : Colors.red[100],
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'Laba ${_formatCurrency(itemProfit)}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: itemProfit > 0 ? Colors.green[700] : Colors.red[700],
+                                  ),
+                                ),
                               ),
-                              textAlign: TextAlign.center,
-                            ),
+                            ],
                           ),
                         ],
                       ),
@@ -574,10 +590,35 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
+  // Helper row untuk detail di expanded
+  Widget _detailRowReport(String label, String value,
+      {Color? valueColor, bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+          Text(value,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+                color: valueColor,
+              )),
+        ],
+      ),
+    );
+  }
+
   Widget _buildServiceCard(QueryDocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     final isGrooming = data['type'] == 'grooming';
     final dateTime = DateTime.parse(data['dateTime']);
+    final total = _safeToDouble(data['total'] ?? data['price']);
+    final laba = isGrooming
+        ? _safeToDouble(data['price']) - _safeToDouble(data['modal'])
+        : total;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -586,10 +627,7 @@ class _ReportScreenState extends State<ReportScreen> {
         child: ExpansionTile(
           leading: Container(
             padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.orange[50],
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: Colors.orange[50], shape: BoxShape.circle),
             child: Icon(
               isGrooming ? Icons.content_cut : Icons.home,
               color: Colors.orange[700],
@@ -598,38 +636,38 @@ class _ReportScreenState extends State<ReportScreen> {
           ),
           title: Text(
             '${isGrooming ? 'Grooming' : 'Penitipan'} - ${data['catName']}',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}',
-                style: GoogleFonts.poppins(fontSize: 12),
-              ),
-              Text('Pembayaran: ${data['paymentMethod']}',
-                  style: GoogleFonts.poppins(fontSize: 12)),
-              Text(
-                'Total: Rp ${_formatCurrency(_safeToDouble(data['total'] ?? data['price']))}',
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold, color: Colors.green[600]),
-              ),
-              // ✅ Tampilkan laba grooming di kartu laporan juga
-              if (isGrooming) ...[
-                Builder(builder: (_) {
-                  final price = _safeToDouble(data['price']);
-                  final modal = _safeToDouble(data['modal']);
-                  final laba = price - modal;
-                  return Text(
-                    'Laba: Rp ${_formatCurrency(laba)}',
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${dateTime.day}/${dateTime.month}/${dateTime.year}  ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}',
+                    style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600]),
+                  ),
+                ),
+                Text(
+                  'Rp ${_formatCurrency(total)}',
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green[700],
+                      fontSize: 13),
+                ),
+                if (isGrooming) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    '• Laba ${_formatCurrency(laba)}',
                     style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        color: laba >= 0 ? Colors.orange[700] : Colors.red[600],
-                        fontSize: 12),
-                  );
-                }),
+                        fontSize: 11,
+                        color: laba >= 0 ? Colors.orange[700] : Colors.red[600]),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -639,16 +677,14 @@ class _ReportScreenState extends State<ReportScreen> {
             ),
             child: Text(
               isGrooming ? 'Grooming' : 'Nitip',
-              style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
+              style: GoogleFonts.poppins(color: Colors.white, fontSize: 11),
             ),
           ),
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              child: isGrooming
-                  ? _buildGroomingDetail(data)
-                  : _buildPenitipanDetail(data),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: isGrooming ? _buildGroomingDetail(data) : _buildPenitipanDetail(data),
             ),
           ],
         ),
@@ -660,22 +696,15 @@ class _ReportScreenState extends State<ReportScreen> {
     final price = _safeToDouble(data['price']);
     final modal = _safeToDouble(data['modal']);
     final laba = price - modal;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _detailRow('Jenis Grooming', data['serviceType'] ?? '-'),
-        _detailRow('Modal', 'Rp ${_formatCurrency(modal)}',
-            valueColor: Colors.red[600]),
-        _detailRow('Harga Jual', 'Rp ${_formatCurrency(price)}',
-            valueColor: Colors.green[700]),
+        _detailRow('Modal', 'Rp ${_formatCurrency(modal)}', valueColor: Colors.red[600]),
+        _detailRow('Harga Jual', 'Rp ${_formatCurrency(price)}', valueColor: Colors.green[700]),
         const Divider(height: 16),
-        _detailRow(
-          'Laba Bersih',
-          'Rp ${_formatCurrency(laba)}',
-          isBold: true,
-          valueColor: laba >= 0 ? Colors.orange[700] : Colors.red[600],
-        ),
+        _detailRow('Laba Bersih', 'Rp ${_formatCurrency(laba)}',
+            isBold: true, valueColor: laba >= 0 ? Colors.orange[700] : Colors.red[600]),
       ],
     );
   }
@@ -697,39 +726,32 @@ class _ReportScreenState extends State<ReportScreen> {
         _detailRow('Harga/hari', 'Rp ${_formatCurrency(pricePerDay)}'),
         _detailRow('Jumlah hari', '$days hari'),
         if (discount > 0)
-          _detailRow('Diskon', '- Rp ${_formatCurrency(discount)}',
-              valueColor: Colors.red[600]),
+          _detailRow('Diskon', '- Rp ${_formatCurrency(discount)}', valueColor: Colors.red[600]),
         const Divider(height: 16),
         _detailRow('Total', 'Rp ${_formatCurrency(total)}',
             isBold: true, valueColor: Colors.green[700]),
         if (dp > 0)
-          _detailRow('DP dibayar', 'Rp ${_formatCurrency(dp)}',
-              valueColor: Colors.orange[700]),
+          _detailRow('DP dibayar', 'Rp ${_formatCurrency(dp)}', valueColor: Colors.orange[700]),
         if (dp > 0 && !isPaid)
           _detailRow('Sisa pembayaran', 'Rp ${_formatCurrency(total - dp)}',
               isBold: true, valueColor: Colors.red[600]),
-        if (isPaid)
-          _detailRow('Status', '✅ Lunas', valueColor: Colors.green[700]),
+        if (isPaid) _detailRow('Status', '✅ Lunas', valueColor: Colors.green[700]),
       ],
     );
   }
 
-  Widget _detailRow(String label, String value,
-      {bool isBold = false, Color? valueColor}) {
+  Widget _detailRow(String label, String value, {bool isBold = false, Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style:
-                  GoogleFonts.poppins(fontSize: 13, color: Colors.grey[600])),
+          Text(label, style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[600])),
           Text(value,
               style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-                color: valueColor,
-              )),
+                  fontSize: 13,
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+                  color: valueColor)),
         ],
       ),
     );
@@ -739,8 +761,7 @@ class _ReportScreenState extends State<ReportScreen> {
     final range = _getDateRange();
     return _firestore
         .collection('orders')
-        .where('dateTime',
-            isGreaterThanOrEqualTo: range['start']!.toIso8601String())
+        .where('dateTime', isGreaterThanOrEqualTo: range['start']!.toIso8601String())
         .where('dateTime', isLessThan: range['end']!.toIso8601String())
         .orderBy('dateTime', descending: true)
         .snapshots();
@@ -750,8 +771,7 @@ class _ReportScreenState extends State<ReportScreen> {
     final range = _getDateRange();
     return _firestore
         .collection('services')
-        .where('dateTime',
-            isGreaterThanOrEqualTo: range['start']!.toIso8601String())
+        .where('dateTime', isGreaterThanOrEqualTo: range['start']!.toIso8601String())
         .where('dateTime', isLessThan: range['end']!.toIso8601String())
         .orderBy('dateTime', descending: true)
         .snapshots();
@@ -761,8 +781,7 @@ class _ReportScreenState extends State<ReportScreen> {
     DateTime startDate, endDate;
     switch (_selectedPeriod) {
       case 'Harian':
-        startDate = DateTime(
-            _selectedDate.year, _selectedDate.month, _selectedDate.day);
+        startDate = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
         endDate = startDate.add(const Duration(days: 1));
         break;
       case 'Bulanan':
@@ -787,12 +806,12 @@ class _ReportScreenState extends State<ReportScreen> {
     double omset = 0;
     double totalCost = 0;
     double netProfit = 0;
+    double totalDiscount = 0; // ← field baru
 
     if (_selectedFilter == 'Semua' || _selectedFilter == 'Produk') {
       final ordersSnap = await _firestore
           .collection('orders')
-          .where('dateTime',
-              isGreaterThanOrEqualTo: range['start']!.toIso8601String())
+          .where('dateTime', isGreaterThanOrEqualTo: range['start']!.toIso8601String())
           .where('dateTime', isLessThan: range['end']!.toIso8601String())
           .get();
 
@@ -800,24 +819,31 @@ class _ReportScreenState extends State<ReportScreen> {
       for (var doc in ordersSnap.docs) {
         final data = doc.data();
         final items = data['items'] as List;
-        totalItems += items.fold<int>(
-            0, (sum, item) => sum + (item['quantity'] as int));
+        final discount = _safeToDouble(data['discount']); // ← baca diskon
+
+        totalItems += items.fold<int>(0, (sum, item) => sum + (item['quantity'] as int));
+        totalDiscount += discount;
+
+        // Omset = total yang benar-benar dibayar (sudah dikurangi diskon)
         omset += _safeToDouble(data['total']);
+
         for (var item in items) {
           double buyPrice = _safeToDouble(item['buyPrice']);
           double sellPrice = _safeToDouble(item['price']);
           int qty = item['quantity'] as int;
           totalCost += buyPrice * qty;
+          // Laba per item dihitung dari harga jual normal
           netProfit += (sellPrice - buyPrice) * qty;
         }
+        // Kurangi laba dengan diskon yang diberikan
+        netProfit -= discount;
       }
     }
 
     if (_selectedFilter == 'Semua' || _selectedFilter == 'Service') {
       final servicesSnap = await _firestore
           .collection('services')
-          .where('dateTime',
-              isGreaterThanOrEqualTo: range['start']!.toIso8601String())
+          .where('dateTime', isGreaterThanOrEqualTo: range['start']!.toIso8601String())
           .where('dateTime', isLessThan: range['end']!.toIso8601String())
           .get();
 
@@ -825,23 +851,20 @@ class _ReportScreenState extends State<ReportScreen> {
 
       for (var doc in servicesSnap.docs) {
         final data = doc.data();
-
         final double revenue;
         final double cost;
 
         if (data['type'] == 'grooming') {
-          // ✅ FIX: Grooming laba = price - modal (bukan price penuh)
           revenue = _safeToDouble(data['price']);
           cost = _safeToDouble(data['modal']);
         } else {
-          // Penitipan: pure profit, tidak ada COGS terpisah
           revenue = _safeToDouble(data['total']);
           cost = 0;
         }
 
         omset += revenue;
         totalCost += cost;
-        netProfit += revenue - cost; // ✅ Dikurangi modal dulu
+        netProfit += revenue - cost;
         totalItems += 1;
       }
     }
@@ -852,6 +875,7 @@ class _ReportScreenState extends State<ReportScreen> {
       'omset': omset,
       'totalCost': totalCost,
       'netProfit': netProfit,
+      'totalDiscount': totalDiscount, // ← return field baru
     };
   }
 
@@ -905,10 +929,8 @@ class _ReportScreenState extends State<ReportScreen> {
       case 'Harian':
         return '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}';
       case 'Bulanan':
-        final months = [
-          'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-          'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
-        ];
+        final months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+            'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         return '${months[_selectedDate.month - 1]} ${_selectedDate.year}';
       case 'Tahunan':
         return '${_selectedDate.year}';
@@ -925,9 +947,7 @@ class _ReportScreenState extends State<ReportScreen> {
         firstDate: DateTime(2020),
         lastDate: DateTime.now(),
       );
-      if (picked != null && picked != _selectedDate) {
-        setState(() => _selectedDate = picked);
-      }
+      if (picked != null && picked != _selectedDate) setState(() => _selectedDate = picked);
     } else if (_selectedPeriod == 'Bulanan') {
       final DateTime? picked = await showDatePicker(
         context: context,
@@ -936,21 +956,16 @@ class _ReportScreenState extends State<ReportScreen> {
         lastDate: DateTime.now(),
         selectableDayPredicate: (DateTime date) => date.day == 1,
       );
-      if (picked != null) {
-        setState(() => _selectedDate = DateTime(picked.year, picked.month, 1));
-      }
+      if (picked != null) setState(() => _selectedDate = DateTime(picked.year, picked.month, 1));
     } else if (_selectedPeriod == 'Tahunan') {
       final DateTime? picked = await showDatePicker(
         context: context,
         initialDate: _selectedDate,
         firstDate: DateTime(2020),
         lastDate: DateTime.now(),
-        selectableDayPredicate: (DateTime date) =>
-            date.day == 1 && date.month == 1,
+        selectableDayPredicate: (DateTime date) => date.day == 1 && date.month == 1,
       );
-      if (picked != null) {
-        setState(() => _selectedDate = DateTime(picked.year, 1, 1));
-      }
+      if (picked != null) setState(() => _selectedDate = DateTime(picked.year, 1, 1));
     }
   }
 }
